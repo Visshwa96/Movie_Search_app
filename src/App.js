@@ -4,6 +4,7 @@ import SearchIcon from './Search.svg'
 import Movie from './Movie.jsx'
 import TrailerModal from './TrailerModal.jsx'
 import WatchOptions from './WatchOptions.jsx'
+import MovieSoundtrack from './MovieSoundtrack.jsx'
 import './App.css'
 
 //step 1: Define the Api url which means that the data is going to be fetched from this API
@@ -18,6 +19,7 @@ export const App = () =>{
     const [error, setError] = useState(null);
     const [trailerVideoId, setTrailerVideoId] = useState(null);
     const [selectedMovie, setSelectedMovie] = useState(null);
+    const [soundtrackMovie, setSoundtrackMovie] = useState(null);
     // let movie_text = document.getElementById({Search_field})
     //Movie Fetching Mechanics
 
@@ -81,6 +83,14 @@ export const App = () =>{
         setSelectedMovie(null);
     }
 
+    const handleSoundtrackClick = (movie) => {
+        setSoundtrackMovie(movie);
+    }
+
+    const closeSoundtrack = () => {
+        setSoundtrackMovie(null);
+    }
+
     useEffect(() => {
         FindMovie('superman');            
     },[])
@@ -109,6 +119,7 @@ export const App = () =>{
                                 movie = {movie} 
                                 onMovieClick={handleMovieClick}
                                 onWatchOptionsClick={handleWatchOptionsClick}
+                                onSoundtrackClick={handleSoundtrackClick}
                             />
                         ) ) }
                     </div>
@@ -121,6 +132,7 @@ export const App = () =>{
             
             <TrailerModal videoId={trailerVideoId} onClose={closeTrailer} />
             <WatchOptions movie={selectedMovie} onClose={closeWatchOptions} />
+            <MovieSoundtrack movie={soundtrackMovie} onClose={closeSoundtrack} />
         </div>
 
     );

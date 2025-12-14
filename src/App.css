@@ -224,6 +224,36 @@ h1 {
   transform: scale(1.1);
 }
 
+.music-btn {
+  position: absolute;
+  bottom: 80px;
+  left: 15px;
+  background: linear-gradient(135deg, #FF6B9D 0%, #C06C84 100%);
+  border: none;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 4;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+}
+
+.movie:hover .music-btn {
+  opacity: 1;
+}
+
+.music-btn:hover {
+  background: linear-gradient(135deg, #FF85A8 0%, #D07C94 100%);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(255, 107, 157, 0.5);
+}
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
@@ -517,6 +547,117 @@ h1 {
   padding: 20px;
 }
 
+/* Soundtrack Modal Styles */
+.soundtrack-modal {
+  position: relative;
+  width: 90%;
+  max-width: 900px;
+  max-height: 85vh;
+  background: linear-gradient(135deg, #1a1d1f 0%, #2a1d2e 100%);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0px 15px 60px rgba(255, 107, 157, 0.4);
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  border: 2px solid rgba(255, 107, 157, 0.3);
+}
+
+.soundtrack-header {
+  margin-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 107, 157, 0.3);
+  padding-bottom: 15px;
+}
+
+.soundtrack-header h2 {
+  font-family: var(--font-roboto);
+  color: #FF85A8;
+  font-size: 2rem;
+  margin-bottom: 5px;
+}
+
+.soundtrack-year {
+  color: #a1a1a1;
+  font-size: 1.1rem;
+  font-family: var(--font-raleway);
+}
+
+.soundtrack-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.youtube-player {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+.youtube-player iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+}
+
+.soundtrack-info {
+  background: rgba(255, 107, 157, 0.1);
+  padding: 15px 20px;
+  border-radius: 10px;
+  border-left: 4px solid #FF85A8;
+}
+
+.info-text {
+  color: #f9d3b4;
+  font-family: var(--font-raleway);
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.info-subtext {
+  color: #a1a1a1;
+  font-family: var(--font-raleway);
+  font-size: 0.95rem;
+}
+
+.player-tips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 15px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.tip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+.tip-icon {
+  font-size: 1.5rem;
+}
+
+.tip span:last-child {
+  color: #e0e0e0;
+  font-family: var(--font-raleway);
+  font-size: 0.9rem;
+}
+
 @media screen and (max-width: 600px) {
   .app {
     padding: 4rem 2rem;
@@ -581,5 +722,27 @@ h1 {
     font-size: 1.2rem;
     bottom: 70px;
     right: 10px;
+  }
+
+  .music-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    bottom: 70px;
+    left: 10px;
+  }
+
+  .soundtrack-modal {
+    width: 95%;
+    padding: 20px;
+    max-height: 90vh;
+  }
+
+  .soundtrack-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .player-tips {
+    grid-template-columns: 1fr;
   }
 }

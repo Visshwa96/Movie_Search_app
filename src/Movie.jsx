@@ -1,10 +1,15 @@
 import React from 'react';
 
-const Movie = ({ movie, onMovieClick, onWatchOptionsClick }) => {
+const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick }) => {
     
     const handleMovieClick = (e) => {
+        // If click is on music button, show soundtrack
+        if (e.target.closest('.music-btn')) {
+            e.stopPropagation();
+            onSoundtrackClick(movie);
+        }
         // If click is on watch button, show watch options
-        if (e.target.closest('.watch-btn')) {
+        else if (e.target.closest('.watch-btn')) {
             e.stopPropagation();
             onWatchOptionsClick(movie);
         } else {
@@ -28,6 +33,9 @@ const Movie = ({ movie, onMovieClick, onWatchOptionsClick }) => {
     <div className="play-icon">▶</div>
     <button className="watch-btn" title="Where to watch">
         📺
+    </button>
+    <button className="music-btn" title="Listen to soundtrack">
+        🎵
     </button>
 </div>
     );
