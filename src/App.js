@@ -3,6 +3,7 @@ import {useState,  useEffect} from 'react';
 import SearchIcon from './Search.svg'
 import Movie from './Movie.jsx'
 import TrailerModal from './TrailerModal.jsx'
+import WatchOptions from './WatchOptions.jsx'
 import './App.css'
 
 //step 1: Define the Api url which means that the data is going to be fetched from this API
@@ -16,6 +17,7 @@ export const App = () =>{
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [trailerVideoId, setTrailerVideoId] = useState(null);
+    const [selectedMovie, setSelectedMovie] = useState(null);
     // let movie_text = document.getElementById({Search_field})
     //Movie Fetching Mechanics
 
@@ -71,6 +73,14 @@ export const App = () =>{
         setTrailerVideoId(null);
     }
 
+    const handleWatchOptionsClick = (movie) => {
+        setSelectedMovie(movie);
+    }
+
+    const closeWatchOptions = () => {
+        setSelectedMovie(null);
+    }
+
     useEffect(() => {
         FindMovie('superman');            
     },[])
@@ -94,7 +104,12 @@ export const App = () =>{
                 ) : movie.length > 0 ? (
                     <div className = "container">
                         {movie.map((movie) => (
-                            <Movie key={movie.imdbID} movie = {movie} onMovieClick={handleMovieClick}/>
+                            <Movie 
+                                key={movie.imdbID} 
+                                movie = {movie} 
+                                onMovieClick={handleMovieClick}
+                                onWatchOptionsClick={handleWatchOptionsClick}
+                            />
                         ) ) }
                     </div>
                 ) : (
@@ -105,6 +120,7 @@ export const App = () =>{
             }
             
             <TrailerModal videoId={trailerVideoId} onClose={closeTrailer} />
+            <WatchOptions movie={selectedMovie} onClose={closeWatchOptions} />
         </div>
 
     );

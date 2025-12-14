@@ -1,8 +1,20 @@
 import React from 'react';
 
-const Movie = ({ movie, onMovieClick }) => {
+const Movie = ({ movie, onMovieClick, onWatchOptionsClick }) => {
+    
+    const handleMovieClick = (e) => {
+        // If click is on watch button, show watch options
+        if (e.target.closest('.watch-btn')) {
+            e.stopPropagation();
+            onWatchOptionsClick(movie);
+        } else {
+            // Otherwise show trailer
+            onMovieClick(movie.Title);
+        }
+    };
+
     return(
-<div className = "movie" onClick={() => onMovieClick(movie.Title)}>
+<div className = "movie" onClick={handleMovieClick}>
     <div>
         <p>{movie.Year}</p>
     </div>
@@ -14,6 +26,9 @@ const Movie = ({ movie, onMovieClick }) => {
         <h3>{movie.Title}</h3>
     </div>
     <div className="play-icon">▶</div>
+    <button className="watch-btn" title="Where to watch">
+        📺
+    </button>
 </div>
     );
 }
