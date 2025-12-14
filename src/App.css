@@ -606,11 +606,25 @@ h1 {
   border-radius: 12px;
 }
 
+.soundtrack-loading,
+.soundtrack-error {
+  text-align: center;
+  padding: 60px 20px;
+  color: #f9d3b4;
+  font-family: var(--font-raleway);
+  font-size: 1.2rem;
+}
+
+.soundtrack-error {
+  color: #FF85A8;
+}
+
 .soundtrack-info {
   background: rgba(255, 107, 157, 0.1);
   padding: 15px 20px;
   border-radius: 10px;
   border-left: 4px solid #FF85A8;
+  margin-top: 20px;
 }
 
 .info-text {
