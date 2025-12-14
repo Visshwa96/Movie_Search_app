@@ -8,6 +8,8 @@ const WatchOptions = ({ movie, onClose }) => {
         setLoading(false);
     }, [movie]);
 
+    if (!movie) return null;
+
     const isRecentRelease = () => {
         const currentYear = new Date().getFullYear();
         const movieYear = parseInt(movie.Year);
@@ -78,8 +80,6 @@ const WatchOptions = ({ movie, onClose }) => {
             color: '#FA57C1'
         }
     ];
-
-    if (!movie) return null;
 
     return (
         <div className="modal-overlay" onClick={onClose}>
