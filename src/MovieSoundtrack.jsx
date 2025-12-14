@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 const MovieSoundtrack = ({ movie, onClose }) => {
-    const [videoId, setVideoId] = useState('');
+    const [playlist, setPlaylist] = useState([]);
+    const [selectedVideo, setSelectedVideo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -9,35 +10,46 @@ const MovieSoundtrack = ({ movie, onClose }) => {
 
     useEffect(() => {
         if (movie && YOUTUBE_API_KEY) {
-            searchSoundtrack();
+            searchSoundtracks();
         } else if (movie) {
             setError('YouTube API key not configured');
             setLoading(false);
         }
     }, [movie]);
 
-    const searchSoundtrack = async () => {
+    const searchSoundtracks = async () => {
         try {
             setLoading(true);
             setError(null);
             
-            const query = encodeURIComponent(`${movie.Title} ${movie.Year} soundtrack full album`);
+            const query = encodeURIComponent(`${movie.Title} soundtrack`);
             const response = await fetch(
-                `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${query}&type=video&key=${YOUTUBE_API_KEY}`
+                `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${query}&type=video&videoCategoryId=10&key=${YOUTUBE_API_KEY}`
             );
             
             const data = await response.json();
             
             if (data.items && data.items.length > 0) {
-                setVideoId(data.items[0].id.videoId);
+                const videos = data.items.map(item => ({
+                    id: item.id.videoId,
+                    title: item.snippet.title,
+                    thumbnail: item.snippet.thumbnails.medium.url,
+                    channelTitle: item.snippet.channelTitle
+                }));
+                setPlaylist(videos);
+                setSelectedVideo(videos[0]); // Auto-select first song
             } else {
                 setError('No soundtrack found for this movie');
             }
         } catch (err) {
-            setError('Failed to load soundtrack');
+            setError('Failed to load soundtracks');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSongSelect = (video) => {
+        setSelectedVideo(video);
     };
 
     const getSearchUrl = () => {
@@ -60,7 +72,7 @@ const MovieSoundtrack = ({ movie, onClose }) => {
                 <div className="soundtrack-content">
                     {loading ? (
                         <div className="soundtrack-loading">
-                            <p>🎵 Loading soundtrack...</p>
+                            <p>🎵 Loading soundtracks...</p>
                         </div>
                     ) : error ? (
                         <div className="soundtrack-error">
@@ -77,46 +89,62 @@ const MovieSoundtrack = ({ movie, onClose }) => {
                                 </a>
                             </div>
                         </div>
-                    ) : videoId ? (
-                        <>
-                            <div className="youtube-player">
-                                <iframe
-                                    width="100%"
-                                    height="100%"
-                                    src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
-                                    title={`${movie.Title} Soundtrack`}
-                                    frameBorder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                ></iframe>
-                            </div>
-                            
-                            <div className="soundtrack-info">
-                                <p className="info-text">
-                                    🎧 Playing soundtrack from <strong>{movie.Title}</strong>
-                                </p>
-                                <p className="info-subtext">
-                                    Use player controls to play, pause, and adjust volume
-                                </p>
-                            </div>
-
-                            <div className="player-tips">
-                                <div className="tip">
-                                    <span className="tip-icon">▶️</span>
-                                    <span>Click play to start listening</span>
-                                </div>
-                                <div className="tip">
-                                    <span className="tip-icon">🔊</span>
-                                    <span>Adjust volume in player</span>
-                                </div>
-                                <div className="tip">
-                                    <span className="tip-icon">⚙️</span>
-                                    <span>Change quality settings</span>
-                                </div>
+                    ) : playlist.length > 0 ? (
+                        <div className="music-player-container">
+                            {/* Now Playing Section */}
+                            <div className="now-playing-section">
+                                <h3>🎵 Now Playing</h3>
+                                {selectedVideo && (
+                                    <>
+                                        <div className="youtube-player">
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=0`}
+                                                title={selectedVideo.title}
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            ></iframe>
+                                        </div>
+                                        <div className="current-song-info">
+                                            <p className="current-song-title">{selectedVideo.title}</p>
+                                            <p className="current-song-channel">{selectedVideo.channelTitle}</p>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
+                            {/* Playlist Section */}
+                            <div className="playlist-section">
+                                <h3>📋 Soundtrack Playlist ({playlist.length} songs)</h3>
+                                <div className="playlist-container">
+                                    {playlist.map((video, index) => (
+                                        <div 
+                                            key={video.id}
+                                            className={`playlist-item ${selectedVideo?.id === video.id ? 'active' : ''}`}
+                                            onClick={() => handleSongSelect(video)}
+                                        >
+                                            <div className="playlist-item-number">
+                                                {selectedVideo?.id === video.id ? '▶️' : index + 1}
+                                            </div>
+                                            <img 
+                                                src={video.thumbnail} 
+                                                alt={video.title}
+                                                className="playlist-thumbnail"
+                                            />
+                                            <div className="playlist-item-details">
+                                                <p className="playlist-item-title">{video.title}</p>
+                                                <p className="playlist-item-channel">{video.channelTitle}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Quick Links */}
                             <div className="alternative-platforms">
-                                <h3>More soundtrack options:</h3>
+                                <h3>More Options:</h3>
                                 <div className="music-platforms">
                                     <a 
                                         href={getSearchUrl()}
@@ -125,7 +153,7 @@ const MovieSoundtrack = ({ movie, onClose }) => {
                                         className="platform-link-music"
                                     >
                                         <span className="platform-icon-music">🎬</span>
-                                        More on YouTube
+                                        YouTube
                                     </a>
                                     <a 
                                         href={`https://open.spotify.com/search/${encodeURIComponent(movie.Title + ' soundtrack')}`}
@@ -145,18 +173,9 @@ const MovieSoundtrack = ({ movie, onClose }) => {
                                         <span className="platform-icon-music">🍎</span>
                                         Apple Music
                                     </a>
-                                    <a 
-                                        href={`https://music.youtube.com/search?q=${encodeURIComponent(movie.Title + ' soundtrack')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="platform-link-music"
-                                    >
-                                        <span className="platform-icon-music">📱</span>
-                                        YT Music
-                                    </a>
                                 </div>
                             </div>
-                        </>
+                        </div>
                     ) : null}
                 </div>
             </div>
