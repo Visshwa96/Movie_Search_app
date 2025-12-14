@@ -73,7 +73,9 @@ const UserPreferences = ({ onSave, onClose, currentPreferences, isFirstTime = tr
 
     const handleSave = () => {
         onSave(preferences);
-        onClose();
+        if (onClose) {
+            onClose();
+        }
     };
 
     const canProceed = () => {
@@ -202,7 +204,7 @@ const UserPreferences = ({ onSave, onClose, currentPreferences, isFirstTime = tr
     return (
         <div className="preferences-overlay">
             <div className="preferences-modal">
-                {!isFirstTime && <button className="preferences-close" onClick={onClose}>×</button>}
+                {!isFirstTime && onClose && <button className="preferences-close" onClick={onClose}>×</button>}
                 
                 <div className="preferences-header">
                     <h2>🎬 {isFirstTime ? 'Welcome! Set Up Your Preferences' : 'Update Your Preferences'}</h2>
