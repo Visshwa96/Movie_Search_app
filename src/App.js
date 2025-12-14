@@ -29,25 +29,201 @@ export const App = () =>{
     // let movie_text = document.getElementById({Search_field})
     //Movie Fetching Mechanics
 
-    const FindMovie = async (title) =>
-    {
+    // Natural Language Search Parser
+    const parseNaturalLanguageQuery = (query) => {
+        const lowerQuery = query.toLowerCase();
+        
+        // Genre detection
+        const genreMap = {
+            'action': ['action', 'fighting', 'combat', 'battle', 'martial arts'],
+            'comedy': ['comedy', 'funny', 'humor', 'laugh', 'hilarious', 'comic'],
+            'drama': ['drama', 'dramatic', 'emotional', 'touching'],
+            'horror': ['horror', 'scary', 'terror', 'creepy', 'frightening', 'haunted'],
+            'thriller': ['thriller', 'thrilling', 'suspense', 'suspenseful', 'tense', 'gripping'],
+            'romance': ['romance', 'romantic', 'love', 'relationship'],
+            'sci-fi': ['sci-fi', 'science fiction', 'futuristic', 'space', 'alien', 'robot', 'cyberpunk'],
+            'fantasy': ['fantasy', 'magic', 'magical', 'wizard', 'dragon', 'medieval'],
+            'mystery': ['mystery', 'detective', 'investigation', 'whodunit', 'puzzle'],
+            'adventure': ['adventure', 'journey', 'quest', 'expedition', 'explore'],
+            'crime': ['crime', 'criminal', 'heist', 'gangster', 'mafia'],
+            'animation': ['animation', 'animated', 'cartoon'],
+            'documentary': ['documentary', 'real story', 'true story', 'biography']
+        };
+
+        // Theme/mood detection
+        const themeKeywords = {
+            'dark': ['dark', 'noir', 'gritty', 'bleak'],
+            'intense': ['intense', 'gripping', 'edge of seat'],
+            'lighthearted': ['light', 'feel good', 'uplifting', 'cheerful'],
+            'epic': ['epic', 'grand', 'spectacular', 'blockbuster'],
+            'twist': ['twist', 'plot twist', 'unexpected', 'surprising'],
+            'emotional': ['emotional', 'touching', 'moving', 'tearjerker'],
+            'fast-paced': ['fast', 'paced', 'quick', 'rapid', 'action-packed']
+        };
+
+        const detectedGenres = [];
+        const searchKeywords = [];
+        const themes = [];
+
+        // Detect genres
+        Object.entries(genreMap).forEach(([genre, keywords]) => {
+            if (keywords.some(keyword => lowerQuery.includes(keyword))) {
+                detectedGenres.push(genre);
+                searchKeywords.push(...keywords.filter(k => lowerQuery.includes(k)));
+            }
+        });
+
+        // Detect themes
+        Object.entries(themeKeywords).forEach(([theme, keywords]) => {
+            if (keywords.some(keyword => lowerQuery.includes(keyword))) {
+                themes.push(theme);
+                searchKeywords.push(...keywords.filter(k => lowerQuery.includes(k)));
+            }
+        });
+
+        // Extract additional keywords (remove common words)
+        const commonWords = ['a', 'an', 'the', 'with', 'and', 'or', 'for', 'about', 'movie', 'film', 'good', 'great', 'best', 'nice', 'i', 'want', 'like', 'show', 'me'];
+        const words = lowerQuery.split(/\s+/).filter(word => 
+            word.length > 2 && 
+            !commonWords.includes(word) &&
+            !searchKeywords.includes(word)
+        );
+
+        return {
+            detectedGenres,
+            themes,
+            keywords: [...new Set([...searchKeywords, ...words])],
+            originalQuery: query
+        };
+    };
+
+    // Smart movie search using natural language
+    const smartSearch = async (parsedQuery) => {
+        const { detectedGenres, themes, keywords, originalQuery } = parsedQuery;
+        const allMovies = new Map(); // Use Map to avoid duplicates by imdbID
+
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch(`${API_URL}&s=${title}`);
-            const data = await response.json();
-            
-            if (data.Response === "True") {
-                setMovies(data.Search);
+
+            // Search strategy: combine multiple searches
+            const searchTerms = [];
+
+            // Add genre-based searches
+            detectedGenres.forEach(genre => {
+                searchTerms.push(genre);
+            });
+
+            // Add theme-based searches
+            themes.forEach(theme => {
+                searchTerms.push(theme);
+            });
+
+            // Add keyword searches
+            keywords.slice(0, 3).forEach(keyword => {
+                searchTerms.push(keyword);
+            });
+
+            // If no specific terms detected, use original query
+            if (searchTerms.length === 0) {
+                searchTerms.push(originalQuery);
+            }
+
+            // Perform searches
+            const searchPromises = searchTerms.map(term => 
+                fetch(`${API_URL}&s=${encodeURIComponent(term)}`)
+                    .then(res => res.json())
+                    .catch(() => ({ Response: "False" }))
+            );
+
+            const results = await Promise.all(searchPromises);
+
+            // Combine results
+            results.forEach(data => {
+                if (data.Response === "True" && data.Search) {
+                    data.Search.forEach(movie => {
+                        if (!allMovies.has(movie.imdbID)) {
+                            // Add relevance score
+                            movie.relevanceScore = 0;
+                            
+                            // Score based on genre match
+                            detectedGenres.forEach(genre => {
+                                if (movie.Title.toLowerCase().includes(genre) || 
+                                    movie.Type?.toLowerCase().includes(genre)) {
+                                    movie.relevanceScore += 10;
+                                }
+                            });
+
+                            // Score based on theme match
+                            themes.forEach(theme => {
+                                if (movie.Title.toLowerCase().includes(theme)) {
+                                    movie.relevanceScore += 5;
+                                }
+                            });
+
+                            // Score based on keyword match
+                            keywords.forEach(keyword => {
+                                if (movie.Title.toLowerCase().includes(keyword)) {
+                                    movie.relevanceScore += 3;
+                                }
+                            });
+
+                            allMovies.set(movie.imdbID, movie);
+                        }
+                    });
+                }
+            });
+
+            const movieArray = Array.from(allMovies.values());
+
+            if (movieArray.length > 0) {
+                // Sort by relevance score
+                const sortedByRelevance = movieArray.sort((a, b) => 
+                    (b.relevanceScore || 0) - (a.relevanceScore || 0)
+                );
+                setMovies(sortedByRelevance);
             } else {
                 setMovies([]);
-                setError(data.Error || 'No movies found');
+                setError('No movies found matching your description. Try different keywords!');
             }
         } catch (err) {
-            setError('Failed to fetch movies. Please try again.');
+            setError('Failed to search movies. Please try again.');
             setMovies([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const FindMovie = async (title) =>
+    {
+        // Check if this looks like a natural language query
+        const isNaturalLanguage = title.split(' ').length > 2 || 
+                                   /thriller|suspense|action|comedy|drama|horror|romantic|scary|funny|dark|intense|thrilling/.test(title.toLowerCase());
+
+        if (isNaturalLanguage) {
+            // Use smart search for natural language queries
+            const parsedQuery = parseNaturalLanguageQuery(title);
+            await smartSearch(parsedQuery);
+        } else {
+            // Use traditional search for simple title searches
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await fetch(`${API_URL}&s=${title}`);
+                const data = await response.json();
+                
+                if (data.Response === "True") {
+                    setMovies(data.Search);
+                } else {
+                    setMovies([]);
+                    setError(data.Error || 'No movies found');
+                }
+            } catch (err) {
+                setError('Failed to fetch movies. Please try again.');
+                setMovies([]);
+            } finally {
+                setLoading(false);
+            }
         }
     }
 
@@ -188,7 +364,18 @@ export const App = () =>{
                 </button>
             </div>
             <div className = "search">
-                <input id = "Search_field" type = "text" value = {searchTerm} placeholder = "Search for Movies" onChange = {(e) => setSearchTerm(e.target.value)}/>
+                <input 
+                    id = "Search_field" 
+                    type = "text" 
+                    value = {searchTerm} 
+                    placeholder = "Try: 'Action movie with thrilling suspense' or 'Superman'" 
+                    onChange = {(e) => setSearchTerm(e.target.value)}
+                    onKeyPress = {(e) => {
+                        if (e.key === 'Enter') {
+                            FindMovie(searchTerm);
+                        }
+                    }}
+                />
                 <img src = {SearchIcon} onClick = {() => {FindMovie(searchTerm)} }/>
             </div>
             {userPreferences && userPreferences.favoriteGenres.length > 0 && (
