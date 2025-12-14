@@ -643,7 +643,7 @@ export const App = () =>{
                         />
                         <img src = {SearchIcon} onClick = {() => {FindMovie(searchTerm)} }/>
                     </div>
-            </div>
+
                     {userPreferences && userPreferences.favoriteGenres.length > 0 && (
                         <div className="active-preferences">
                             <span>🎯 Personalized for you:</span>
