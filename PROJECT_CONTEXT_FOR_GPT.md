@@ -18,15 +18,15 @@ Movie_Search_app/
 │   ├── manifest.json
 │   └── robots.txt
 ├── src/
-│   ├── App.js                    # Main application component (594 lines)
+│   ├── App.js                    # Main application component (706 lines)
 │   ├── App.css                   # Complete styling (1220+ lines)
 │   ├── index.js                  # React entry point
 │   ├── Movie.jsx                 # Movie card component
 │   ├── TrailerModal.jsx          # YouTube trailer modal
 │   ├── WatchOptions.jsx          # Where to watch modal (streaming platforms)
 │   ├── MovieSoundtrack.jsx       # Soundtrack playlist modal
-│   ├── UserPreferences.jsx       # Personalization modal (180 lines)
-│   ├── UserPreferences.css       # Preferences styling (400+ lines)
+│   ├── UserPreferences.jsx       # 4-step preferences wizard (230 lines)
+│   ├── UserPreferences.css       # Preferences styling (427 lines)
 │   └── Search.svg                # Search icon
 ├── package.json
 ├── README.md
@@ -52,6 +52,8 @@ REACT_APP_YOUTUBE_API_KEY=[user's YouTube API key]
 - **Genre Detection**: Detects 13 genres (action, comedy, drama, horror, thriller, romance, sci-fi, fantasy, mystery, adventure, crime, animation, documentary)
 - **Theme/Mood Detection**: Dark, intense, lighthearted, epic, twist, emotional, fast-paced
 - **Language Detection**: 13 languages including Tamil, Hindi, Telugu, Malayalam, Kannada, English, Spanish, French, Korean, Japanese, Chinese, German, Italian
+- **Streaming Platform Detection**: 10 platforms (Netflix, Amazon Prime, Disney+, Hulu, HBO Max, Apple TV+, Paramount+, Peacock, Showtime, Starz)
+- **Content Type Filtering**: Series, Movie, Documentary (filters results by type)
 - **Specific IMDB Ratings**: 
   - "around 8.6" → searches 8.3-8.9 range
   - "8+" → searches 8.0-10.0
@@ -63,27 +65,32 @@ REACT_APP_YOUTUBE_API_KEY=[user's YouTube API key]
 - "comedy romantic around 8.6 in tamil"
 - "dark thriller with plot twists highly rated"
 - "funny comedy 8+ in korean"
+- "best netflix romantic series in korean"
+- "amazon prime thriller movie"
 
 **How It Works**:
-1. Parses user query to extract genres, themes, languages, ratings
-2. Performs multiple parallel searches combining detected keywords
-3. Fetches detailed movie info (up to 80 movies) to get IMDB ratings and languages
-4. Filters by rating range and language
-5. Scores movies based on relevance (genre +10, theme +5, keyword +3)
-6. Sorts by rating (if filter applied) then relevance
-7. Returns sorted, deduplicated results
+1. Parses user query to extract genres, themes, languages, platforms, content types, ratings
+2. Performs multiple parallel searches with platform-based searches prioritized
+3. Filters by content type (series/movie/documentary) during result collection
+4. Fetches detailed movie info (up to 80 movies) to get IMDB ratings and languages
+5. Filters by rating range and language
+6. Scores movies based on relevance: Platform +15, Type +8, Genre +10, Theme +5, Keyword +3
+7. Sorts by rating (if filter applied) then relevance
+8. Returns sorted, deduplicated results
 
-### 2. **User Personalization System**
+### 2. **User Personalization System** (MANDATORY 4-STEP WIZARD)
 **Location**: `UserPreferences.jsx`, `UserPreferences.css`
 
 **Features**:
-- Genre selection (17 genres with toggle buttons)
-- Avoid genres (deprioritization)
-- Decade preferences (2020s through Classic pre-1950)
-- Rating preferences (all, high 7+, medium 5-7, family-friendly)
-- Favorite actors/directors input
+- **Step 1 (REQUIRED)**: Genre selection - must select at least 1 genre from 17 options
+- **Step 2 (Optional)**: Decade preferences (2020s through Classic pre-1950)
+- **Step 3 (Optional)**: Rating preferences + Avoid genres
+- **Step 4 (Optional)**: Favorite actors/directors + Summary review
+- Progress indicator with 4 dots (active/completed states)
+- Navigation buttons (Back/Next with validation)
 - LocalStorage persistence
-- Auto-show on first visit (1 second delay)
+- **Blocks search until preferences completed** - shows welcome message
+- Auto-shows on first visit with no close button until completion
 
 **Integration** (`App.js`):
 - `sortMoviesByPreferences()` function scores movies based on user preferences
@@ -167,6 +174,10 @@ const [trailerVideoId, setTrailerVideoId] = useState(null) // Current trailer
 const [selectedMovie, setSelectedMovie] = useState(null)   // For watch options
 const [soundtrackMovie, setSoundtrackMovie] = useState(null) // For soundtrack
 const [showPreferences, setShowPreferences] = useState(false) // Preferences modal
+const [isFirstTime, setIsFirstTime] = useState(true)       // First visit detection
+const [preferencesCompleted, setPreferencesCompleted] = useState(() => {
+    return localStorage.getItem('preferencesCompleted') === 'true'; // Blocks search
+})
 const [userPreferences, setUserPreferences] = useState(() => {
     // Load from localStorage
     const saved = localStorage.getItem('moviePreferences');
@@ -240,13 +251,13 @@ const [userPreferences, setUserPreferences] = useState(() => {
 ## Git Workflow & Deployment
 
 **Recent Commits** (most recent first):
-1. `cc9fc63` - "Add specific rating ranges and language detection - supports 'around 8.6 in tamil' queries"
-2. `97b0e20` - "Add IMDB rating filter to natural language search - supports 'high imdb', 'top rated' queries"
-3. `4ff5cd5` - "Add natural language search - users can search with descriptions like 'action thriller with suspense'"
-4. `6984df2` - "Add personalization feature with genre/decade preferences and intelligent movie sorting"
-5. `fe98cd1` - "Optimize scroll performance by removing fixed backgrounds and reducing backdrop filters"
-6. `c51ea67` - "Simplify hover animations and reduce GPU usage"
-7. `d55258c` - "Optimize animations for better performance"
+1. `1c2ac57` - "Fix JSX syntax error - remove extra closing div tag"
+2. `5f7fdb8` - "Add streaming platform detection (Netflix, Prime, Disney+) and content type filters (series/movie) to NLP search"
+3. `d7237f3` - "Convert preferences to mandatory 4-step wizard and create PROJECT_CONTEXT_FOR_GPT.md"
+4. `cc9fc63` - "Add specific rating ranges and language detection - supports 'around 8.6 in tamil' queries"
+5. `97b0e20` - "Add IMDB rating filter to natural language search - supports 'high imdb', 'top rated' queries"
+6. `4ff5cd5` - "Add natural language search - users can search with descriptions like 'action thriller with suspense'"
+7. `6984df2` - "Add personalization feature with genre/decade preferences and intelligent movie sorting"
 
 **Deployment**:
 - Push to master branch auto-deploys to Vercel
@@ -312,8 +323,16 @@ npm start
 3. Add keywords to `genreKeywords` in `sortMoviesByPreferences()` (App.js line ~455)
 
 **Add New Language**:
-1. Update `languageMap` in `parseNaturalLanguageQuery()` (App.js line ~55)
-2. Add detection logic in smartSearch filter (App.js line ~265)
+1. Update `languageMap` in `parseNaturalLanguageQuery()` (App.js line ~70)
+2. Add detection logic in smartSearch filter (App.js line ~390)
+
+**Add New Streaming Platform**:
+1. Update `platformKeywords` in `parseNaturalLanguageQuery()` (App.js line ~85)
+2. Platform detection automatically integrated into scoring (+15 points)
+
+**Add New Content Type**:
+1. Update `typeKeywords` in `parseNaturalLanguageQuery()` (App.js line ~100)
+2. Type filtering automatically applied in smartSearch (App.js line ~280)
 
 **Modify UI Colors**:
 1. Update CSS variables in `App.css` (`:root` section, line ~11)
@@ -334,6 +353,9 @@ npm start
 "dark horror highly rated"
 "sci-fi 9+ in english"
 "animated funny 8+ in japanese"
+"best netflix romantic series in korean"
+"amazon prime action movie"
+"disney animated movie for kids"
 ```
 
 ---
@@ -386,26 +408,30 @@ const [state, setState] = useState(() => {
 "I'm working on a React movie search application with advanced features. Here's the complete context:
 
 **Current Features**:
-- Natural language search (supports queries like 'comedy romantic around 8.6 in tamil')
+- Natural language search (supports queries like 'best netflix romantic series in korean')
 - Genre, theme, and language detection (13 languages including Tamil, Hindi, Telugu)
+- Streaming platform detection (Netflix, Amazon Prime, Disney+, Hulu, HBO Max, etc.)
+- Content type filtering (series, movie, documentary)
 - Specific IMDB rating filters (e.g., 'around 8.6' searches 8.3-8.9)
-- User personalization with localStorage persistence
+- Mandatory 4-step user preferences wizard (blocks search until complete)
 - Modern Gen Z UI with glassmorphism and neon colors
 - Movie modals for trailers, watch options, and soundtracks
 
 **Tech Stack**: React 18.3.1, OMDB API, YouTube API, Vercel deployment
 
 **File Structure**:
-- App.js (594 lines) - Main component with parseNaturalLanguageQuery() and smartSearch()
+- App.js (706 lines) - Main component with parseNaturalLanguageQuery() and smartSearch()
 - App.css (1220+ lines) - Performance-optimized styling
 - Movie.jsx - Movie cards with rating/language badges
-- UserPreferences.jsx - Personalization modal
+- UserPreferences.jsx (230 lines) - Mandatory 4-step preferences wizard
+- UserPreferences.css (427 lines) - Step indicator and navigation styling
 - Modals: TrailerModal, WatchOptions, MovieSoundtrack
 
 **Key Functions**:
-- parseNaturalLanguageQuery(): Detects genres, themes, languages, rating ranges
-- smartSearch(): Multi-search strategy with detailed fetching and filtering
+- parseNaturalLanguageQuery(): Detects genres, themes, languages, platforms, content types, rating ranges
+- smartSearch(): Multi-search with platform priority, type filtering, enhanced scoring (Platform +15, Type +8)
 - sortMoviesByPreferences(): Personalizes results based on user preferences
+- handleSavePreferences(): Saves preferences and sets preferencesCompleted flag
 
 **Performance Optimizations**:
 - Backdrop-filter reduced to 10px
@@ -430,10 +456,12 @@ Please help me [SPECIFIC REQUEST]."
 ## Last Known State
 
 - All features working and deployed
-- Natural language search with language + specific rating support fully implemented
+- Natural language search with streaming platform detection and content type filtering
+- Supports queries like "best netflix romantic series in korean"
+- Mandatory 4-step preferences wizard blocks search until completion
 - Movie cards show IMDB rating and language badges when available
-- User preferences system with localStorage persistence
+- Enhanced scoring: Platform +15, Type +8, Genre +10, Theme +5, Keyword +3
 - Performance optimizations applied for smooth scrolling and animations
 
-**Last Commit**: cc9fc63 - "Add specific rating ranges and language detection"
+**Last Commit**: 1c2ac57 - "Fix JSX syntax error - remove extra closing div tag"
 **Date**: December 14, 2025
