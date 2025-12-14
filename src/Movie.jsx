@@ -25,6 +25,9 @@ const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick }) 
         {movie.imdbRating && (
             <p className="imdb-rating">⭐ {movie.imdbRating}</p>
         )}
+        {movie.Language && (
+            <p className="movie-language">🌐 {movie.Language.split(',')[0]}</p>
+        )}
     </div>
     <div>
     <img src = {movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/400'} alt={movie.Title}/>

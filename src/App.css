@@ -279,6 +279,14 @@ h1 {
   text-shadow: 0 0 10px rgba(6, 255, 165, 0.6);
 }
 
+.movie-language {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--neon-purple);
+  text-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+
 .movie-genres {
   margin-top: 6px;
   font-size: 0.75rem;

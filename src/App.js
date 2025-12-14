@@ -61,6 +61,23 @@ export const App = () =>{
             'fast-paced': ['fast', 'paced', 'quick', 'rapid', 'action-packed']
         };
 
+        // Language detection
+        const languageMap = {
+            'tamil': ['tamil', 'kollywood'],
+            'hindi': ['hindi', 'bollywood', 'hindustani'],
+            'telugu': ['telugu', 'tollywood'],
+            'malayalam': ['malayalam', 'mollywood'],
+            'kannada': ['kannada', 'sandalwood'],
+            'english': ['english', 'hollywood'],
+            'spanish': ['spanish', 'español'],
+            'french': ['french', 'français'],
+            'korean': ['korean', 'k-drama'],
+            'japanese': ['japanese', 'anime'],
+            'chinese': ['chinese', 'mandarin', 'cantonese'],
+            'german': ['german', 'deutsch'],
+            'italian': ['italian', 'italiano']
+        };
+
         // Rating detection
         const ratingKeywords = {
             'high': ['high imdb', 'top rated', 'highly rated', 'best rated', 'good rating', 'high rating', 'great rating'],
@@ -71,7 +88,10 @@ export const App = () =>{
         const detectedGenres = [];
         const searchKeywords = [];
         const themes = [];
+        let detectedLanguages = [];
         let ratingFilter = null;
+        let specificRating = null;
+        let ratingRange = null;
 
         // Detect genres
         Object.entries(genreMap).forEach(([genre, keywords]) => {
@@ -89,33 +109,71 @@ export const App = () =>{
             }
         });
 
-        // Detect rating requirements
-        if (ratingKeywords.high.some(keyword => lowerQuery.includes(keyword))) {
+        // Detect languages
+        Object.entries(languageMap).forEach(([language, keywords]) => {
+            if (keywords.some(keyword => lowerQuery.includes(keyword))) {
+                detectedLanguages.push(language);
+                searchKeywords.push(...keywords.filter(k => lowerQuery.includes(k)));
+            }
+        });
+
+        // Detect specific rating numbers (e.g., "8.6", "8+", "around 8.6")
+        const ratingMatch = lowerQuery.match(/(?:around |about |near )?(\d+\.?\d*)\+?/);
+        if (ratingMatch) {
+            specificRating = parseFloat(ratingMatch[1]);
+            // Create a range: if "8.6", look for 8.4-8.8; if "8+", look for 8.0+
+            if (lowerQuery.includes('around') || lowerQuery.includes('about') || lowerQuery.includes('near')) {
+                ratingRange = {
+                    min: specificRating - 0.3,
+                    max: specificRating + 0.3
+                };
+            } else if (lowerQuery.includes('+')) {
+                ratingRange = {
+                    min: specificRating,
+                    max: 10.0
+                };
+            } else {
+                // Exact or close match
+                ratingRange = {
+                    min: specificRating - 0.2,
+                    max: specificRating + 0.2
+                };
+            }
+            ratingFilter = 'specific';
+        }
+        // Detect rating requirements (fallback)
+        else if (ratingKeywords.high.some(keyword => lowerQuery.includes(keyword))) {
             ratingFilter = 'high'; // 7.0+
+            ratingRange = { min: 7.0, max: 10.0 };
         } else if (ratingKeywords.medium.some(keyword => lowerQuery.includes(keyword))) {
             ratingFilter = 'medium'; // 5.0-7.0
+            ratingRange = { min: 5.0, max: 7.0 };
         }
 
         // Extract additional keywords (remove common words)
-        const commonWords = ['a', 'an', 'the', 'with', 'and', 'or', 'for', 'about', 'movie', 'film', 'good', 'great', 'best', 'nice', 'i', 'want', 'like', 'show', 'me', 'but', 'also', 'high', 'imdb', 'rating', 'rated'];
+        const commonWords = ['a', 'an', 'the', 'with', 'and', 'or', 'for', 'about', 'movie', 'film', 'good', 'great', 'best', 'nice', 'i', 'want', 'like', 'show', 'me', 'but', 'also', 'high', 'imdb', 'rating', 'rated', 'around', 'near', 'in'];
         const words = lowerQuery.split(/\s+/).filter(word => 
             word.length > 2 && 
             !commonWords.includes(word) &&
-            !searchKeywords.includes(word)
+            !searchKeywords.includes(word) &&
+            !/^\d+\.?\d*$/.test(word) // Remove numbers
         );
 
         return {
             detectedGenres,
             themes,
             keywords: [...new Set([...searchKeywords, ...words])],
+            detectedLanguages,
             ratingFilter,
+            specificRating,
+            ratingRange,
             originalQuery: query
         };
     };
 
     // Smart movie search using natural language
     const smartSearch = async (parsedQuery) => {
-        const { detectedGenres, themes, keywords, ratingFilter, originalQuery } = parsedQuery;
+        const { detectedGenres, themes, keywords, detectedLanguages, ratingFilter, ratingRange, originalQuery } = parsedQuery;
         const allMovies = new Map(); // Use Map to avoid duplicates by imdbID
 
         try {
@@ -192,10 +250,10 @@ export const App = () =>{
 
             let movieArray = Array.from(allMovies.values());
 
-            // If rating filter is requested, fetch detailed info and filter
-            if (ratingFilter && movieArray.length > 0) {
-                // Fetch detailed info for top 50 movies to get ratings
-                const detailedPromises = movieArray.slice(0, 50).map(movie =>
+            // If rating filter or language filter is requested, fetch detailed info and filter
+            if ((ratingFilter || detectedLanguages.length > 0) && movieArray.length > 0) {
+                // Fetch detailed info for top 80 movies to get ratings and language
+                const detailedPromises = movieArray.slice(0, 80).map(movie =>
                     fetch(`${API_URL}&i=${movie.imdbID}`)
                         .then(res => res.json())
                         .catch(() => null)
@@ -207,15 +265,49 @@ export const App = () =>{
                     .filter(details => {
                         if (!details || details.Response === "False") return false;
                         
-                        const rating = parseFloat(details.imdbRating);
-                        if (isNaN(rating)) return false;
-
                         // Apply rating filter
-                        if (ratingFilter === 'high') {
-                            return rating >= 7.0;
-                        } else if (ratingFilter === 'medium') {
-                            return rating >= 5.0 && rating < 7.0;
+                        if (ratingFilter) {
+                            const rating = parseFloat(details.imdbRating);
+                            if (isNaN(rating)) return false;
+
+                            if (ratingRange) {
+                                // Use specific rating range
+                                if (rating < ratingRange.min || rating > ratingRange.max) {
+                                    return false;
+                                }
+                            } else if (ratingFilter === 'high') {
+                                if (rating < 7.0) return false;
+                            } else if (ratingFilter === 'medium') {
+                                if (rating < 5.0 || rating >= 7.0) return false;
+                            }
                         }
+
+                        // Apply language filter
+                        if (detectedLanguages.length > 0) {
+                            const movieLanguage = details.Language?.toLowerCase() || '';
+                            const movieCountry = details.Country?.toLowerCase() || '';
+                            
+                            // Check if any detected language matches
+                            const hasMatchingLanguage = detectedLanguages.some(lang => {
+                                if (lang === 'tamil') return movieLanguage.includes('tamil') || movieCountry.includes('india');
+                                if (lang === 'hindi') return movieLanguage.includes('hindi') || movieCountry.includes('india');
+                                if (lang === 'telugu') return movieLanguage.includes('telugu') || movieCountry.includes('india');
+                                if (lang === 'malayalam') return movieLanguage.includes('malayalam') || movieCountry.includes('india');
+                                if (lang === 'kannada') return movieLanguage.includes('kannada') || movieCountry.includes('india');
+                                if (lang === 'english') return movieLanguage.includes('english');
+                                if (lang === 'spanish') return movieLanguage.includes('spanish');
+                                if (lang === 'french') return movieLanguage.includes('french');
+                                if (lang === 'korean') return movieLanguage.includes('korean') || movieCountry.includes('korea');
+                                if (lang === 'japanese') return movieLanguage.includes('japanese') || movieCountry.includes('japan');
+                                if (lang === 'chinese') return movieLanguage.includes('chinese') || movieLanguage.includes('mandarin') || movieLanguage.includes('cantonese');
+                                if (lang === 'german') return movieLanguage.includes('german');
+                                if (lang === 'italian') return movieLanguage.includes('italian');
+                                return false;
+                            });
+                            
+                            if (!hasMatchingLanguage) return false;
+                        }
+
                         return true;
                     })
                     .map(details => {
@@ -433,7 +525,7 @@ export const App = () =>{
                     id = "Search_field" 
                     type = "text" 
                     value = {searchTerm} 
-                    placeholder = "Try: 'Action movie with thrilling suspense' or 'Superman'" 
+                    placeholder = "Try: 'comedy romantic around 8.6 in tamil' or 'Superman'" 
                     onChange = {(e) => setSearchTerm(e.target.value)}
                     onKeyPress = {(e) => {
                         if (e.key === 'Enter') {
