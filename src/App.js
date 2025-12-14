@@ -528,6 +528,14 @@ export const App = () =>{
         localStorage.setItem('preferencesCompleted', 'true');
         setPreferencesCompleted(true);
         setIsFirstTime(false);
+        
+        // Immediately search for movies based on user's favorite genres
+        if (prefs.favoriteGenres && prefs.favoriteGenres.length > 0) {
+            const searchQuery = prefs.favoriteGenres.slice(0, 2).join(' ');
+            FindMovie(searchQuery);
+        } else {
+            FindMovie('trending movies');
+        }
     }
 
     const openPreferences = () => {
@@ -601,8 +609,13 @@ export const App = () =>{
         if (!preferencesCompleted) {
             setShowPreferences(true);
         } else {
-            // Load default movies only after preferences are completed
-            FindMovie('superman');
+            // Load movies based on user preferences
+            if (userPreferences && userPreferences.favoriteGenres && userPreferences.favoriteGenres.length > 0) {
+                const searchQuery = userPreferences.favoriteGenres.slice(0, 2).join(' ');
+                FindMovie(searchQuery);
+            } else {
+                FindMovie('popular movies');
+            }
         }
     },[])
     
