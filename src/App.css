@@ -26,11 +26,10 @@ body {
   font-family: var(--font-primary);
   background: var(--bg-dark);
   background-image: 
-    radial-gradient(at 0% 0%, rgba(102, 126, 234, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(245, 87, 108, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(6, 255, 165, 0.15) 0px, transparent 50%);
-  background-attachment: fixed;
+    radial-gradient(at 0% 0%, rgba(102, 126, 234, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(245, 87, 108, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(6, 255, 165, 0.1) 0px, transparent 50%);
   color: var(--text-primary);
   overflow-x: hidden;
 }
@@ -66,12 +65,11 @@ h1 {
   justify-content: center;
   padding: 1.2rem 2rem;
   border-radius: 2rem;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
   position: relative;
 }
@@ -171,9 +169,7 @@ h1 {
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(10, 11, 15, 0.8);
 }
 
 .movie div:nth-of-type(1) {
@@ -207,9 +203,7 @@ h1 {
 
 .movie div:nth-of-type(3) {
   z-index: 2;
-  background: linear-gradient(to top, rgba(10, 11, 15, 0.95) 0%, transparent 100%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: linear-gradient(to top, rgba(10, 11, 15, 0.98) 0%, transparent 100%);
   padding: 20px 24px 24px 24px;
   position: absolute;
   bottom: 0;
@@ -333,9 +327,9 @@ h1 {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(10, 11, 15, 0.85);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  background: rgba(10, 11, 15, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -356,13 +350,12 @@ h1 {
   position: relative;
   width: 90%;
   max-width: 900px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
+  background: rgba(10, 11, 15, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 25px;
-  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
   border: 2px solid rgba(255, 255, 255, 0.1);
   animation: modalSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -428,13 +421,12 @@ h1 {
   width: 90%;
   max-width: 700px;
   max-height: 85vh;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
+  background: rgba(10, 11, 15, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 35px;
-  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
   border: 2px solid rgba(255, 255, 255, 0.1);
   overflow-y: auto;
   animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -533,12 +525,10 @@ h1 {
 
 .watch-section {
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   padding: 25px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .watch-section:hover {
@@ -602,8 +592,6 @@ h1 {
   gap: 10px;
   padding: 15px 10px;
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
@@ -753,13 +741,12 @@ h1 {
   width: 90%;
   max-width: 900px;
   max-height: 85vh;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
+  background: rgba(10, 11, 15, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 35px;
-  box-shadow: 0 20px 80px rgba(255, 0, 110, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 80px rgba(255, 0, 110, 0.4);
   overflow-y: auto;
   animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border: 2px solid rgba(255, 0, 110, 0.3);
@@ -848,9 +835,7 @@ h1 {
 .current-song-info {
   margin-top: 18px;
   padding: 18px;
-  background: rgba(255, 0, 110, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 0, 110, 0.15);
   border-radius: 12px;
   border-left: 4px solid var(--neon-pink);
   border: 1px solid rgba(255, 0, 110, 0.2);
@@ -875,12 +860,10 @@ h1 {
 
 .playlist-section {
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   padding: 25px;
   border-radius: 16px;
   border: 1px solid rgba(255, 0, 110, 0.2);
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .playlist-section:hover {
@@ -923,11 +906,9 @@ h1 {
   gap: 15px;
   padding: 15px;
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border-radius: 12px;
   cursor: pointer;
-  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
   border: 2px solid transparent;
   position: relative;
   overflow: hidden;
@@ -953,9 +934,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 0, 110, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 0, 110, 0.25);
   border-radius: 8px;
   color: var(--text-primary);
   font-family: var(--font-secondary);
@@ -1057,9 +1036,7 @@ h1 {
 }
 
 .soundtrack-info {
-  background: rgba(255, 0, 110, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 0, 110, 0.15);
   padding: 18px 22px;
   border-radius: 12px;
   border-left: 4px solid var(--neon-pink);
