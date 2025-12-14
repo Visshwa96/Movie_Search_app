@@ -5,6 +5,7 @@ import Movie from './Movie.jsx'
 import TrailerModal from './TrailerModal.jsx'
 import WatchOptions from './WatchOptions.jsx'
 import MovieSoundtrack from './MovieSoundtrack.jsx'
+import UserPreferences from './UserPreferences.jsx'
 import './App.css'
 
 //step 1: Define the Api url which means that the data is going to be fetched from this API
@@ -20,6 +21,11 @@ export const App = () =>{
     const [trailerVideoId, setTrailerVideoId] = useState(null);
     const [selectedMovie, setSelectedMovie] = useState(null);
     const [soundtrackMovie, setSoundtrackMovie] = useState(null);
+    const [showPreferences, setShowPreferences] = useState(false);
+    const [userPreferences, setUserPreferences] = useState(() => {
+        const saved = localStorage.getItem('moviePreferences');
+        return saved ? JSON.parse(saved) : null;
+    });
     // let movie_text = document.getElementById({Search_field})
     //Movie Fetching Mechanics
 
@@ -91,16 +97,113 @@ export const App = () =>{
         setSoundtrackMovie(null);
     }
 
+    const handleSavePreferences = (prefs) => {
+        setUserPreferences(prefs);
+        localStorage.setItem('moviePreferences', JSON.stringify(prefs));
+    }
+
+    const openPreferences = () => {
+        setShowPreferences(true);
+    }
+
+    const closePreferences = () => {
+        setShowPreferences(false);
+    }
+
+    const sortMoviesByPreferences = (movies) => {
+        if (!userPreferences || !userPreferences.favoriteGenres.length) {
+            return movies;
+        }
+
+        return [...movies].sort((a, b) => {
+            let scoreA = 0;
+            let scoreB = 0;
+
+            // Check if movie title/plot matches preferred genres (approximate)
+            const genreKeywords = {
+                'Action': ['action', 'fight', 'battle', 'hero', 'combat'],
+                'Comedy': ['comedy', 'funny', 'laugh', 'humor'],
+                'Drama': ['drama', 'story', 'life', 'family'],
+                'Horror': ['horror', 'scary', 'terror', 'fear'],
+                'Romance': ['romance', 'love', 'romantic'],
+                'Sci-Fi': ['sci-fi', 'future', 'space', 'alien', 'robot'],
+                'Thriller': ['thriller', 'suspense', 'mystery'],
+                'Fantasy': ['fantasy', 'magic', 'wizard', 'dragon']
+            };
+
+            userPreferences.favoriteGenres.forEach(genre => {
+                const keywords = genreKeywords[genre] || [];
+                const movieInfo = `${a.Title} ${a.Type}`.toLowerCase();
+                if (keywords.some(keyword => movieInfo.includes(keyword))) {
+                    scoreA += 10;
+                }
+                const movieInfoB = `${b.Title} ${b.Type}`.toLowerCase();
+                if (keywords.some(keyword => movieInfoB.includes(keyword))) {
+                    scoreB += 10;
+                }
+            });
+
+            // Prefer movies from favorite decades
+            if (userPreferences.favoriteDecades.length > 0) {
+                const yearA = parseInt(a.Year);
+                const yearB = parseInt(b.Year);
+                
+                userPreferences.favoriteDecades.forEach(decade => {
+                    if (decade === '2020s' && yearA >= 2020) scoreA += 5;
+                    if (decade === '2010s' && yearA >= 2010 && yearA < 2020) scoreA += 5;
+                    if (decade === '2000s' && yearA >= 2000 && yearA < 2010) scoreA += 5;
+                    if (decade === '1990s' && yearA >= 1990 && yearA < 2000) scoreA += 5;
+                    if (decade === '1980s' && yearA >= 1980 && yearA < 1990) scoreA += 5;
+                    
+                    if (decade === '2020s' && yearB >= 2020) scoreB += 5;
+                    if (decade === '2010s' && yearB >= 2010 && yearB < 2020) scoreB += 5;
+                    if (decade === '2000s' && yearB >= 2000 && yearB < 2010) scoreB += 5;
+                    if (decade === '1990s' && yearB >= 1990 && yearB < 2000) scoreB += 5;
+                    if (decade === '1980s' && yearB >= 1980 && yearB < 1990) scoreB += 5;
+                });
+            }
+
+            return scoreB - scoreA; // Higher score first
+        });
+    }
+
     useEffect(() => {
-        FindMovie('superman');            
+        FindMovie('superman');
+        // Show preferences modal on first visit
+        if (!userPreferences && !localStorage.getItem('preferencesShown')) {
+            setTimeout(() => {
+                setShowPreferences(true);
+                localStorage.setItem('preferencesShown', 'true');
+            }, 1000);
+        }
     },[])
+    const sortedMovies = sortMoviesByPreferences(movie);
+
     return(
         <div className = "app">
-            <h1>Visshwa Movie App</h1>     
+            <div className="app-header">
+                <h1>Visshwa Movie App</h1>
+                <button className="preferences-btn" onClick={openPreferences} title="Personalize your experience">
+                    ⚙️ Preferences
+                </button>
+            </div>
             <div className = "search">
                 <input id = "Search_field" type = "text" value = {searchTerm} placeholder = "Search for Movies" onChange = {(e) => setSearchTerm(e.target.value)}/>
                 <img src = {SearchIcon} onClick = {() => {FindMovie(searchTerm)} }/>
             </div>
+            {userPreferences && userPreferences.favoriteGenres.length > 0 && (
+                <div className="active-preferences">
+                    <span>🎯 Personalized for you:</span>
+                    <div className="pref-tags">
+                        {userPreferences.favoriteGenres.slice(0, 3).map((genre, index) => (
+                            <span key={index} className="pref-tag">{genre}</span>
+                        ))}
+                        {userPreferences.favoriteGenres.length > 3 && (
+                            <span className="pref-tag">+{userPreferences.favoriteGenres.length - 3} more</span>
+                        )}
+                    </div>
+                </div>
+            )}
             {/* step3 : dynamically change the movie page by writing a simple condition */}
             { 
                 loading ? (
@@ -111,9 +214,9 @@ export const App = () =>{
                     <div className = "empty">
                         <h2>{error}</h2>
                     </div>
-                ) : movie.length > 0 ? (
+                ) : sortedMovies.length > 0 ? (
                     <div className = "container">
-                        {movie.map((movie) => (
+                        {sortedMovies.map((movie) => (
                             <Movie 
                                 key={movie.imdbID} 
                                 movie = {movie} 
@@ -133,6 +236,13 @@ export const App = () =>{
             <TrailerModal videoId={trailerVideoId} onClose={closeTrailer} />
             <WatchOptions movie={selectedMovie} onClose={closeWatchOptions} />
             <MovieSoundtrack movie={soundtrackMovie} onClose={closeSoundtrack} />
+            {showPreferences && (
+                <UserPreferences 
+                    onSave={handleSavePreferences} 
+                    onClose={closePreferences}
+                    currentPreferences={userPreferences}
+                />
+            )}
         </div>
 
     );

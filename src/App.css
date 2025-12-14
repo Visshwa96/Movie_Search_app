@@ -44,6 +44,15 @@ body {
   position: relative;
 }
 
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
 h1 {
   font-size: 4.5rem;
   font-weight: 900;
@@ -54,6 +63,64 @@ h1 {
   -webkit-text-fill-color: transparent;
   width: fit-content;
   position: relative;
+  margin: 0;
+}
+
+.preferences-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(255, 0, 110, 0.2));
+  border: 2px solid var(--neon-purple);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-secondary);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+}
+
+.preferences-btn:hover {
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(168, 85, 247, 0.5);
+}
+
+.active-preferences {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 1.5rem 0;
+  padding: 15px 20px;
+  background: rgba(6, 255, 165, 0.1);
+  border: 2px solid rgba(6, 255, 165, 0.3);
+  border-radius: 16px;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.active-preferences span {
+  color: var(--text-primary);
+  font-family: var(--font-secondary);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.pref-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pref-tag {
+  padding: 6px 14px;
+  background: rgba(6, 255, 165, 0.2);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 20px;
+  color: var(--neon-cyan);
+  font-family: var(--font-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 0 10px rgba(6, 255, 165, 0.2);
 }
 
 .search {
