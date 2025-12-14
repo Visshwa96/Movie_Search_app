@@ -61,9 +61,17 @@ export const App = () =>{
             'fast-paced': ['fast', 'paced', 'quick', 'rapid', 'action-packed']
         };
 
+        // Rating detection
+        const ratingKeywords = {
+            'high': ['high imdb', 'top rated', 'highly rated', 'best rated', 'good rating', 'high rating', 'great rating'],
+            'medium': ['decent rating', 'average rating', 'ok rating'],
+            'any': []
+        };
+
         const detectedGenres = [];
         const searchKeywords = [];
         const themes = [];
+        let ratingFilter = null;
 
         // Detect genres
         Object.entries(genreMap).forEach(([genre, keywords]) => {
@@ -81,8 +89,15 @@ export const App = () =>{
             }
         });
 
+        // Detect rating requirements
+        if (ratingKeywords.high.some(keyword => lowerQuery.includes(keyword))) {
+            ratingFilter = 'high'; // 7.0+
+        } else if (ratingKeywords.medium.some(keyword => lowerQuery.includes(keyword))) {
+            ratingFilter = 'medium'; // 5.0-7.0
+        }
+
         // Extract additional keywords (remove common words)
-        const commonWords = ['a', 'an', 'the', 'with', 'and', 'or', 'for', 'about', 'movie', 'film', 'good', 'great', 'best', 'nice', 'i', 'want', 'like', 'show', 'me'];
+        const commonWords = ['a', 'an', 'the', 'with', 'and', 'or', 'for', 'about', 'movie', 'film', 'good', 'great', 'best', 'nice', 'i', 'want', 'like', 'show', 'me', 'but', 'also', 'high', 'imdb', 'rating', 'rated'];
         const words = lowerQuery.split(/\s+/).filter(word => 
             word.length > 2 && 
             !commonWords.includes(word) &&
@@ -93,13 +108,14 @@ export const App = () =>{
             detectedGenres,
             themes,
             keywords: [...new Set([...searchKeywords, ...words])],
+            ratingFilter,
             originalQuery: query
         };
     };
 
     // Smart movie search using natural language
     const smartSearch = async (parsedQuery) => {
-        const { detectedGenres, themes, keywords, originalQuery } = parsedQuery;
+        const { detectedGenres, themes, keywords, ratingFilter, originalQuery } = parsedQuery;
         const allMovies = new Map(); // Use Map to avoid duplicates by imdbID
 
         try {
@@ -174,14 +190,63 @@ export const App = () =>{
                 }
             });
 
-            const movieArray = Array.from(allMovies.values());
+            let movieArray = Array.from(allMovies.values());
+
+            // If rating filter is requested, fetch detailed info and filter
+            if (ratingFilter && movieArray.length > 0) {
+                // Fetch detailed info for top 50 movies to get ratings
+                const detailedPromises = movieArray.slice(0, 50).map(movie =>
+                    fetch(`${API_URL}&i=${movie.imdbID}`)
+                        .then(res => res.json())
+                        .catch(() => null)
+                );
+
+                const detailedResults = await Promise.all(detailedPromises);
+                
+                movieArray = detailedResults
+                    .filter(details => {
+                        if (!details || details.Response === "False") return false;
+                        
+                        const rating = parseFloat(details.imdbRating);
+                        if (isNaN(rating)) return false;
+
+                        // Apply rating filter
+                        if (ratingFilter === 'high') {
+                            return rating >= 7.0;
+                        } else if (ratingFilter === 'medium') {
+                            return rating >= 5.0 && rating < 7.0;
+                        }
+                        return true;
+                    })
+                    .map(details => {
+                        // Convert detailed info back to search result format
+                        const movie = allMovies.get(details.imdbID);
+                        return {
+                            ...movie,
+                            imdbRating: details.imdbRating,
+                            Genre: details.Genre
+                        };
+                    });
+            }
 
             if (movieArray.length > 0) {
-                // Sort by relevance score
-                const sortedByRelevance = movieArray.sort((a, b) => 
-                    (b.relevanceScore || 0) - (a.relevanceScore || 0)
-                );
-                setMovies(sortedByRelevance);
+                // Sort by rating if filter applied, otherwise by relevance
+                if (ratingFilter) {
+                    movieArray.sort((a, b) => {
+                        const ratingA = parseFloat(a.imdbRating) || 0;
+                        const ratingB = parseFloat(b.imdbRating) || 0;
+                        // Primary sort by rating, secondary by relevance
+                        if (ratingB !== ratingA) {
+                            return ratingB - ratingA;
+                        }
+                        return (b.relevanceScore || 0) - (a.relevanceScore || 0);
+                    });
+                } else {
+                    movieArray.sort((a, b) => 
+                        (b.relevanceScore || 0) - (a.relevanceScore || 0)
+                    );
+                }
+                setMovies(movieArray);
             } else {
                 setMovies([]);
                 setError('No movies found matching your description. Try different keywords!');

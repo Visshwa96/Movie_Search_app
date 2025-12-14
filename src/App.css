@@ -271,6 +271,23 @@ h1 {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 }
 
+.imdb-rating {
+  margin-top: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px rgba(6, 255, 165, 0.6);
+}
+
+.movie-genres {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  line-height: 1.2;
+  opacity: 0.9;
+}
+
 .movie:hover {
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5),
               0 0 30px rgba(6, 255, 165, 0.2);

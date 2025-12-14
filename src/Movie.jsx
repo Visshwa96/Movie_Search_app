@@ -22,6 +22,9 @@ const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick }) 
 <div className = "movie" onClick={handleMovieClick}>
     <div>
         <p>{movie.Year}</p>
+        {movie.imdbRating && (
+            <p className="imdb-rating">⭐ {movie.imdbRating}</p>
+        )}
     </div>
     <div>
     <img src = {movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/400'} alt={movie.Title}/>
@@ -29,6 +32,9 @@ const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick }) 
     <div>
         <span>{movie.Type}</span>
         <h3>{movie.Title}</h3>
+        {movie.Genre && (
+            <p className="movie-genres">{movie.Genre}</p>
+        )}
     </div>
     <div className="play-icon">▶</div>
     <button className="watch-btn" title="Where to watch">
