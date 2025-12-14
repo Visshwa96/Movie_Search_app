@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 const MovieSoundtrack = ({ movie, onClose }) => {
-    const [searchQuery, setSearchQuery] = useState('');
-
-    useEffect(() => {
-        if (movie) {
-            // Create search query for movie soundtrack
-            setSearchQuery(`${movie.Title} ${movie.Year} soundtrack full album`);
-        }
-    }, [movie]);
 
     if (!movie) return null;
 
-    // Create YouTube embed URL - this will show search results as a playlist
-    const getEmbedUrl = () => {
-        const query = encodeURIComponent(searchQuery);
-        // Use YouTube embed with search query - this creates a playlist of matching videos
-        return `https://www.youtube.com/embed?listType=search&list=${query}`;
+    // Create YouTube search URL that opens in the embedded player
+    const getSearchUrl = () => {
+        const query = encodeURIComponent(`${movie.Title} ${movie.Year} soundtrack full album`);
+        return `https://www.youtube.com/results?search_query=${query}`;
+    };
+
+    // Create direct YouTube search embed that users can interact with
+    const getEmbedSearchUrl = () => {
+        const query = encodeURIComponent(`${movie.Title} soundtrack`);
+        return `https://www.youtube.com/embed/videoseries?list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf&search_query=${query}`;
     };
 
     return (
@@ -30,39 +27,82 @@ const MovieSoundtrack = ({ movie, onClose }) => {
                 </div>
 
                 <div className="soundtrack-content">
-                    <div className="youtube-player">
-                        <iframe
-                            width="100%"
-                            height="100%"
-                            src={getEmbedUrl()}
-                            title={`${movie.Title} Soundtrack`}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                        ></iframe>
-                    </div>
-                    
                     <div className="soundtrack-info">
                         <p className="info-text">
-                            🎧 Playing soundtrack from <strong>{movie.Title}</strong>
+                            🎧 Listen to soundtrack from <strong>{movie.Title}</strong>
                         </p>
                         <p className="info-subtext">
-                            Click on any song from the playlist to start listening
+                            Click the button below to search and play soundtracks on YouTube
                         </p>
+                    </div>
+
+                    <div className="youtube-search-section">
+                        <a 
+                            href={getSearchUrl()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="youtube-search-btn"
+                        >
+                            <span className="youtube-icon">▶️</span>
+                            <span>Search "{movie.Title} Soundtrack" on YouTube</span>
+                        </a>
+                        <p className="search-hint">Opens YouTube in a new tab with soundtrack results</p>
                     </div>
 
                     <div className="player-tips">
                         <div className="tip">
-                            <span className="tip-icon">▶️</span>
-                            <span>Click play on any song to start</span>
+                            <span className="tip-icon">🎵</span>
+                            <span>Full soundtrack albums available</span>
                         </div>
                         <div className="tip">
-                            <span className="tip-icon">📋</span>
-                            <span>Browse playlist for more tracks</span>
+                            <span className="tip-icon">🎼</span>
+                            <span>Original movie scores and songs</span>
                         </div>
                         <div className="tip">
                             <span className="tip-icon">🔊</span>
-                            <span>Adjust volume in player controls</span>
+                            <span>High quality audio playback</span>
+                        </div>
+                    </div>
+
+                    <div className="alternative-platforms">
+                        <h3>Or listen on other platforms:</h3>
+                        <div className="music-platforms">
+                            <a 
+                                href={`https://open.spotify.com/search/${encodeURIComponent(movie.Title + ' soundtrack')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="platform-link-music"
+                            >
+                                <span className="platform-icon-music">🎧</span>
+                                Spotify
+                            </a>
+                            <a 
+                                href={`https://music.apple.com/search?term=${encodeURIComponent(movie.Title + ' soundtrack')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="platform-link-music"
+                            >
+                                <span className="platform-icon-music">🍎</span>
+                                Apple Music
+                            </a>
+                            <a 
+                                href={`https://music.youtube.com/search?q=${encodeURIComponent(movie.Title + ' soundtrack')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="platform-link-music"
+                            >
+                                <span className="platform-icon-music">🎬</span>
+                                YouTube Music
+                            </a>
+                            <a 
+                                href={`https://www.amazon.com/s?k=${encodeURIComponent(movie.Title + ' soundtrack')}&i=digital-music`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="platform-link-music"
+                            >
+                                <span className="platform-icon-music">🛒</span>
+                                Amazon Music
+                            </a>
                         </div>
                     </div>
                 </div>
