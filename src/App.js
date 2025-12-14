@@ -75,16 +75,37 @@ export const App = () =>{
             'english': ['english', 'hollywood'],
             'spanish': ['spanish', 'español'],
             'french': ['french', 'français'],
-            'korean': ['korean', 'k-drama'],
+            'korean': ['korean', 'k-drama', 'kdrama'],
             'japanese': ['japanese', 'anime'],
             'chinese': ['chinese', 'mandarin', 'cantonese'],
             'german': ['german', 'deutsch'],
             'italian': ['italian', 'italiano']
         };
 
+        // Streaming platform detection
+        const platformKeywords = {
+            'netflix': ['netflix', 'nflx'],
+            'amazon': ['amazon prime', 'prime video', 'amazon', 'prime'],
+            'disney': ['disney+', 'disney plus', 'disney', 'hotstar'],
+            'hulu': ['hulu'],
+            'hbo': ['hbo max', 'hbo', 'max'],
+            'apple': ['apple tv+', 'apple tv', 'appletv'],
+            'paramount': ['paramount+', 'paramount plus', 'paramount'],
+            'peacock': ['peacock'],
+            'showtime': ['showtime'],
+            'starz': ['starz']
+        };
+
+        // Content type detection
+        const typeKeywords = {
+            'series': ['series', 'show', 'tv show', 'season', 'episode', 'drama'],
+            'movie': ['movie', 'film', 'cinema'],
+            'documentary': ['documentary', 'docuseries']
+        };
+
         // Rating detection
         const ratingKeywords = {
-            'high': ['high imdb', 'top rated', 'highly rated', 'best rated', 'good rating', 'high rating', 'great rating'],
+            'high': ['high imdb', 'top rated', 'highly rated', 'best rated', 'good rating', 'high rating', 'great rating', 'best'],
             'medium': ['decent rating', 'average rating', 'ok rating'],
             'any': []
         };
@@ -93,6 +114,8 @@ export const App = () =>{
         const searchKeywords = [];
         const themes = [];
         let detectedLanguages = [];
+        let detectedPlatforms = [];
+        let detectedTypes = [];
         let ratingFilter = null;
         let specificRating = null;
         let ratingRange = null;
@@ -118,6 +141,23 @@ export const App = () =>{
             if (keywords.some(keyword => lowerQuery.includes(keyword))) {
                 detectedLanguages.push(language);
                 searchKeywords.push(...keywords.filter(k => lowerQuery.includes(k)));
+            }
+        });
+
+        // Detect streaming platforms
+        Object.entries(platformKeywords).forEach(([platform, keywords]) => {
+            if (keywords.some(keyword => lowerQuery.includes(keyword))) {
+                detectedPlatforms.push(platform);
+                searchKeywords.push(...keywords.filter(k => lowerQuery.includes(k)));
+            }
+        });
+
+        // Detect content types
+        Object.entries(typeKeywords).forEach(([type, keywords]) => {
+            if (keywords.some(keyword => lowerQuery.includes(keyword))) {
+                if (!detectedTypes.includes(type)) {
+                    detectedTypes.push(type);
+                }
             }
         });
 
@@ -155,7 +195,7 @@ export const App = () =>{
         }
 
         // Extract additional keywords (remove common words)
-        const commonWords = ['a', 'an', 'the', 'with', 'and', 'or', 'for', 'about', 'movie', 'film', 'good', 'great', 'best', 'nice', 'i', 'want', 'like', 'show', 'me', 'but', 'also', 'high', 'imdb', 'rating', 'rated', 'around', 'near', 'in'];
+        const commonWords = ['a', 'an', 'the', 'with', 'and', 'or', 'for', 'about', 'movie', 'film', 'good', 'great', 'best', 'nice', 'i', 'want', 'like', 'show', 'me', 'but', 'also', 'high', 'imdb', 'rating', 'rated', 'around', 'near', 'in', 'on', 'from'];
         const words = lowerQuery.split(/\s+/).filter(word => 
             word.length > 2 && 
             !commonWords.includes(word) &&
@@ -168,6 +208,8 @@ export const App = () =>{
             themes,
             keywords: [...new Set([...searchKeywords, ...words])],
             detectedLanguages,
+            detectedPlatforms,
+            detectedTypes,
             ratingFilter,
             specificRating,
             ratingRange,
@@ -177,7 +219,7 @@ export const App = () =>{
 
     // Smart movie search using natural language
     const smartSearch = async (parsedQuery) => {
-        const { detectedGenres, themes, keywords, detectedLanguages, ratingFilter, ratingRange, originalQuery } = parsedQuery;
+        const { detectedGenres, themes, keywords, detectedLanguages, detectedPlatforms, detectedTypes, ratingFilter, ratingRange, originalQuery } = parsedQuery;
         const allMovies = new Map(); // Use Map to avoid duplicates by imdbID
 
         try {
@@ -186,6 +228,13 @@ export const App = () =>{
 
             // Search strategy: combine multiple searches
             const searchTerms = [];
+
+            // Add platform-specific searches (priority for discovery)
+            if (detectedPlatforms.length > 0) {
+                detectedPlatforms.forEach(platform => {
+                    searchTerms.push(platform);
+                });
+            }
 
             // Add genre-based searches
             detectedGenres.forEach(genre => {
@@ -196,6 +245,13 @@ export const App = () =>{
             themes.forEach(theme => {
                 searchTerms.push(theme);
             });
+
+            // Add language-based searches
+            if (detectedLanguages.length > 0) {
+                detectedLanguages.forEach(lang => {
+                    searchTerms.push(lang);
+                });
+            }
 
             // Add keyword searches
             keywords.slice(0, 3).forEach(keyword => {
@@ -221,8 +277,28 @@ export const App = () =>{
                 if (data.Response === "True" && data.Search) {
                     data.Search.forEach(movie => {
                         if (!allMovies.has(movie.imdbID)) {
+                            // Filter by type if specified
+                            if (detectedTypes.length > 0) {
+                                const movieType = movie.Type?.toLowerCase() || '';
+                                let typeMatches = false;
+                                
+                                detectedTypes.forEach(type => {
+                                    if (type === 'series' && movieType === 'series') typeMatches = true;
+                                    if (type === 'movie' && movieType === 'movie') typeMatches = true;
+                                });
+                                
+                                if (!typeMatches) return; // Skip if type doesn't match
+                            }
+                            
                             // Add relevance score
                             movie.relevanceScore = 0;
+                            
+                            // Score based on platform match (boost significantly)
+                            detectedPlatforms.forEach(platform => {
+                                if (movie.Title.toLowerCase().includes(platform)) {
+                                    movie.relevanceScore += 15;
+                                }
+                            });
                             
                             // Score based on genre match
                             detectedGenres.forEach(genre => {
@@ -245,6 +321,18 @@ export const App = () =>{
                                     movie.relevanceScore += 3;
                                 }
                             });
+
+                            // Score based on type match
+                            if (detectedTypes.length > 0 && movie.Type) {
+                                detectedTypes.forEach(type => {
+                                    if (type === 'series' && movie.Type.toLowerCase() === 'series') {
+                                        movie.relevanceScore += 8;
+                                    }
+                                    if (type === 'movie' && movie.Type.toLowerCase() === 'movie') {
+                                        movie.relevanceScore += 8;
+                                    }
+                                });
+                            }
 
                             allMovies.set(movie.imdbID, movie);
                         }
@@ -359,7 +447,7 @@ export const App = () =>{
     {
         // Check if this looks like a natural language query
         const isNaturalLanguage = title.split(' ').length > 2 || 
-                                   /thriller|suspense|action|comedy|drama|horror|romantic|scary|funny|dark|intense|thrilling/.test(title.toLowerCase());
+                                   /thriller|suspense|action|comedy|drama|horror|romantic|scary|funny|dark|intense|thrilling|netflix|amazon|prime|disney|hulu|series|korean|tamil|hindi|best|top/.test(title.toLowerCase());
 
         if (isNaturalLanguage) {
             // Use smart search for natural language queries
@@ -545,7 +633,7 @@ export const App = () =>{
                             id = "Search_field" 
                             type = "text" 
                             value = {searchTerm} 
-                            placeholder = "Try: 'comedy romantic around 8.6 in tamil' or 'Superman'" 
+                            placeholder = "Try: 'best netflix romantic series in korean' or 'Superman'" 
                             onChange = {(e) => setSearchTerm(e.target.value)}
                             onKeyPress = {(e) => {
                                 if (e.key === 'Enter') {
