@@ -22,9 +22,13 @@ export const App = () =>{
     const [selectedMovie, setSelectedMovie] = useState(null);
     const [soundtrackMovie, setSoundtrackMovie] = useState(null);
     const [showPreferences, setShowPreferences] = useState(false);
+    const [isFirstTime, setIsFirstTime] = useState(true);
     const [userPreferences, setUserPreferences] = useState(() => {
         const saved = localStorage.getItem('moviePreferences');
         return saved ? JSON.parse(saved) : null;
+    });
+    const [preferencesCompleted, setPreferencesCompleted] = useState(() => {
+        return localStorage.getItem('preferencesCompleted') === 'true';
     });
     // let movie_text = document.getElementById({Search_field})
     //Movie Fetching Mechanics
@@ -433,9 +437,13 @@ export const App = () =>{
     const handleSavePreferences = (prefs) => {
         setUserPreferences(prefs);
         localStorage.setItem('moviePreferences', JSON.stringify(prefs));
+        localStorage.setItem('preferencesCompleted', 'true');
+        setPreferencesCompleted(true);
+        setIsFirstTime(false);
     }
 
     const openPreferences = () => {
+        setIsFirstTime(false);
         setShowPreferences(true);
     }
 
@@ -501,81 +509,96 @@ export const App = () =>{
     }
 
     useEffect(() => {
-        FindMovie('superman');
-        // Show preferences modal on first visit
-        if (!userPreferences && !localStorage.getItem('preferencesShown')) {
-            setTimeout(() => {
-                setShowPreferences(true);
-                localStorage.setItem('preferencesShown', 'true');
-            }, 1000);
+        // Show preferences modal on first visit - MANDATORY
+        if (!preferencesCompleted) {
+            setShowPreferences(true);
+        } else {
+            // Load default movies only after preferences are completed
+            FindMovie('superman');
         }
     },[])
+    
     const sortedMovies = sortMoviesByPreferences(movie);
 
     return(
         <div className = "app">
             <div className="app-header">
                 <h1>Visshwa Movie App</h1>
-                <button className="preferences-btn" onClick={openPreferences} title="Personalize your experience">
-                    ⚙️ Preferences
-                </button>
+                {preferencesCompleted && (
+                    <button className="preferences-btn" onClick={openPreferences} title="Update your preferences">
+                        ⚙️ Preferences
+                    </button>
+                )}
             </div>
-            <div className = "search">
-                <input 
-                    id = "Search_field" 
-                    type = "text" 
-                    value = {searchTerm} 
-                    placeholder = "Try: 'comedy romantic around 8.6 in tamil' or 'Superman'" 
-                    onChange = {(e) => setSearchTerm(e.target.value)}
-                    onKeyPress = {(e) => {
-                        if (e.key === 'Enter') {
-                            FindMovie(searchTerm);
-                        }
-                    }}
-                />
-                <img src = {SearchIcon} onClick = {() => {FindMovie(searchTerm)} }/>
-            </div>
-            {userPreferences && userPreferences.favoriteGenres.length > 0 && (
-                <div className="active-preferences">
-                    <span>🎯 Personalized for you:</span>
-                    <div className="pref-tags">
-                        {userPreferences.favoriteGenres.slice(0, 3).map((genre, index) => (
-                            <span key={index} className="pref-tag">{genre}</span>
-                        ))}
-                        {userPreferences.favoriteGenres.length > 3 && (
-                            <span className="pref-tag">+{userPreferences.favoriteGenres.length - 3} more</span>
-                        )}
-                    </div>
+            
+            {!preferencesCompleted && (
+                <div className="welcome-message">
+                    <h2>👋 Welcome!</h2>
+                    <p>Complete your preferences to start discovering amazing movies</p>
                 </div>
             )}
-            {/* step3 : dynamically change the movie page by writing a simple condition */}
-            { 
-                loading ? (
-                    <div className = "empty">
-                        <h2>Loading...</h2>
+            
+            {preferencesCompleted && (
+                <>
+                    <div className = "search">
+                        <input 
+                            id = "Search_field" 
+                            type = "text" 
+                            value = {searchTerm} 
+                            placeholder = "Try: 'comedy romantic around 8.6 in tamil' or 'Superman'" 
+                            onChange = {(e) => setSearchTerm(e.target.value)}
+                            onKeyPress = {(e) => {
+                                if (e.key === 'Enter') {
+                                    FindMovie(searchTerm);
+                                }
+                            }}
+                        />
+                        <img src = {SearchIcon} onClick = {() => {FindMovie(searchTerm)} }/>
                     </div>
-                ) : error ? (
-                    <div className = "empty">
-                        <h2>{error}</h2>
-                    </div>
-                ) : sortedMovies.length > 0 ? (
-                    <div className = "container">
-                        {sortedMovies.map((movie) => (
-                            <Movie 
-                                key={movie.imdbID} 
-                                movie = {movie} 
-                                onMovieClick={handleMovieClick}
-                                onWatchOptionsClick={handleWatchOptionsClick}
-                                onSoundtrackClick={handleSoundtrackClick}
-                            />
-                        ) ) }
-                    </div>
-                ) : (
-                    <div className = "empty">
-                        <h2>No Movies</h2>
-                    </div>
-                )
-            }
+            </div>
+                    {userPreferences && userPreferences.favoriteGenres.length > 0 && (
+                        <div className="active-preferences">
+                            <span>🎯 Personalized for you:</span>
+                            <div className="pref-tags">
+                                {userPreferences.favoriteGenres.slice(0, 3).map((genre, index) => (
+                                    <span key={index} className="pref-tag">{genre}</span>
+                                ))}
+                                {userPreferences.favoriteGenres.length > 3 && (
+                                    <span className="pref-tag">+{userPreferences.favoriteGenres.length - 3} more</span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    {/* step3 : dynamically change the movie page by writing a simple condition */}
+                    { 
+                        loading ? (
+                            <div className = "empty">
+                                <h2>Loading...</h2>
+                            </div>
+                        ) : error ? (
+                            <div className = "empty">
+                                <h2>{error}</h2>
+                            </div>
+                        ) : sortedMovies.length > 0 ? (
+                            <div className = "container">
+                                {sortedMovies.map((movie) => (
+                                    <Movie 
+                                        key={movie.imdbID} 
+                                        movie = {movie} 
+                                        onMovieClick={handleMovieClick}
+                                        onWatchOptionsClick={handleWatchOptionsClick}
+                                        onSoundtrackClick={handleSoundtrackClick}
+                                    />
+                                ) ) }
+                            </div>
+                        ) : (
+                            <div className = "empty">
+                                <h2>No Movies</h2>
+                            </div>
+                        )
+                    }
+                </>
+            )}
             
             <TrailerModal videoId={trailerVideoId} onClose={closeTrailer} />
             <WatchOptions movie={selectedMovie} onClose={closeWatchOptions} />
@@ -583,8 +606,9 @@ export const App = () =>{
             {showPreferences && (
                 <UserPreferences 
                     onSave={handleSavePreferences} 
-                    onClose={closePreferences}
+                    onClose={preferencesCompleted ? closePreferences : null}
                     currentPreferences={userPreferences}
+                    isFirstTime={isFirstTime || !preferencesCompleted}
                 />
             )}
         </div>

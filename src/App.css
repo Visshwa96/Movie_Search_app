@@ -143,6 +143,29 @@ h1 {
   font-weight: 700;
 }
 
+.welcome-message {
+  text-align: center;
+  margin: 4rem 0;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.welcome-message h2 {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue), var(--neon-purple));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1rem;
+}
+
+.welcome-message p {
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  font-family: var(--font-secondary);
+  font-weight: 500;
+}
+
 .search {
   width: 90%;
   max-width: 650px;
