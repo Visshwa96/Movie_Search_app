@@ -460,6 +460,7 @@ export const App = () =>{
                 setError(null);
                 const response = await fetch(`${API_URL}&s=${title}`);
                 const data = await response.json();
+                console.log(data);
                 
                 if (data.Response === "True") {
                     setMovies(data.Search);
