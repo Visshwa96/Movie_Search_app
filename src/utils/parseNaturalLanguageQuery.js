@@ -52,6 +52,7 @@ export function parseNaturalLanguageQuery(query) {
   // Year
   const yearMatch = text.match(/\b(19|20)\d{2}\b/);
   if (yearMatch) intent.year = parseInt(yearMatch[0], 10);
+  console.log("Parsed Intent:", intent);
 
   // Genres
   Object.entries(genreMap).forEach(([g, words]) => {
