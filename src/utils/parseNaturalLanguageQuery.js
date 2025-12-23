@@ -1,82 +1,81 @@
 export function parseNaturalLanguageQuery(query) {
   const text = query.toLowerCase();
 
+  /* ---------- MAPS ---------- */
   const genreMap = {
     action: ["action", "fight", "battle"],
     comedy: ["comedy", "funny"],
-    drama: ["drama"],
+    drama: ["drama", "emotional"],
     horror: ["horror", "ghost", "scary"],
     thriller: ["thriller", "suspense"],
-    romance: ["romance", "romantic", "love"],
+    romance: ["romance", "romantic", "love"]
   };
 
   const languageMap = {
     tamil: ["tamil", "kollywood"],
     hindi: ["hindi", "bollywood"],
-    korean: ["korean", "k-drama"],
-    english: ["english", "hollywood"],
+    korean: ["korean", "k-drama", "kdrama"],
+    english: ["english", "hollywood"]
   };
 
   const stopWords = [
-    "movie",
-    "movies",
-    "film",
-    "films",
-    "best",
-    "top",
-    "latest",
-    "only",
-    "like",
-    "in",
-    "of",
+    "movie", "movies", "film", "films",
+    "best", "top", "latest", "only",
+    "like", "in", "of", "above", "over", "imdb"
   ];
 
+  /* ---------- INTENT ---------- */
   const intent = {
+    detectedGenres: [],
+    detectedLanguages: [],
+    detectedTypes: [],
+    ratingRange: null,
     titleSeeds: [],
-    genres: [],
-    languages: [],
-    year: null,
-    quality: null,
-    type: null,
-    originalQuery: query,
+    originalQuery: query
   };
 
-  // Content type
-  if (/series|show|tv/.test(text)) intent.type = "series";
-  if (/movie|film/.test(text)) intent.type = "movie";
+  /* ---------- CONTENT TYPE ---------- */
+  if (/series|show|tv/.test(text)) intent.detectedTypes.push("series");
+  if (/movie|film/.test(text)) intent.detectedTypes.push("movie");
 
-  // Quality
-  if (/best|top/.test(text)) intent.quality = "high";
-  if (/latest|new/.test(text)) intent.quality = "latest";
-
-  // Year
-  const yearMatch = text.match(/\b(19|20)\d{2}\b/);
-  if (yearMatch) intent.year = parseInt(yearMatch[0], 10);
-  console.log("Parsed Intent:", intent);
-
-  // Genres
-  Object.entries(genreMap).forEach(([g, words]) => {
-    if (words.some(w => text.includes(w))) intent.genres.push(g);
+  /* ---------- GENRES ---------- */
+  Object.entries(genreMap).forEach(([genre, words]) => {
+    if (words.some(w => text.includes(w))) {
+      intent.detectedGenres.push(genre);
+    }
   });
 
-  // Languages
-  Object.entries(languageMap).forEach(([l, words]) => {
-    if (words.some(w => text.includes(w))) intent.languages.push(l);
+  /* ---------- LANGUAGES ---------- */
+  Object.entries(languageMap).forEach(([lang, words]) => {
+    if (words.some(w => text.includes(w))) {
+      intent.detectedLanguages.push(lang);
+    }
   });
 
-  // Title seeds (MOST IMPORTANT)
-  text.split(" ").forEach(word => {
+  /* ---------- RATING (KEY ADDITION) ---------- */
+  // Supports: "above 8.2", "over 8.5", "8.2 imdb"
+  const ratingMatch = text.match(/(?:above|over)?\s*(\d\.\d)/);
+  if (ratingMatch) {
+    intent.ratingRange = {
+      min: parseFloat(ratingMatch[1]),
+      max: 10
+    };
+  }
+
+  /* ---------- TITLE SEEDS (MOST IMPORTANT) ---------- */
+  text.split(/\s+/).forEach(word => {
     if (
       word.length > 2 &&
       !stopWords.includes(word) &&
-      !intent.genres.includes(word) &&
-      !intent.languages.includes(word)
+      !intent.detectedGenres.includes(word) &&
+      !intent.detectedLanguages.includes(word) &&
+      !/^\d/.test(word)
     ) {
       intent.titleSeeds.push(word);
     }
   });
 
-  // Fallback seed
+  /* ---------- FALLBACK ---------- */
   if (!intent.titleSeeds.length) {
     intent.titleSeeds.push("movie");
   }
