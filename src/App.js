@@ -165,24 +165,23 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="app-header">
-        <h1>Visshwa Movie App</h1>
-        <div className="header-buttons">
-          <button 
-            className="favorites-btn" 
-            onClick={() => setShowFavorites(true)}
-            title="My Favorites"
-          >
-            ❤️ Favorites ({favorites.length})
-          </button>
-          <button 
-            className="preferences-btn" 
-            onClick={() => setShowPreferences(true)}
-            title="Settings"
-          >
-            ⚙️ Preferences
-          </button>
-        </div>
+      <h1>Visshwa Movie App</h1>
+      
+      <div className="header-buttons">
+        <button 
+          className="favorites-btn" 
+          onClick={() => setShowFavorites(true)}
+          title="My Favorites"
+        >
+          ❤️ Favorites ({favorites.length})
+        </button>
+        <button 
+          className="preferences-btn" 
+          onClick={() => setShowPreferences(true)}
+          title="Settings"
+        >
+          ⚙️ Preferences
+        </button>
       </div>
 
       {userPreferences && (
