@@ -23,6 +23,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [welcomeMessage, setWelcomeMessage] = useState("");
 
   const [trailerVideoId, setTrailerVideoId] = useState(null);
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -155,11 +156,65 @@ export default function App() {
     }
   };
 
+  /* ---------------- LOAD PERSONALIZED MOVIES ---------------- */
+  const loadPersonalizedMovies = async (preferences) => {
+    if (!preferences || !preferences.favoriteGenres || preferences.favoriteGenres.length === 0) {
+      findMovie("popular movies");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Build query based on preferences
+      const genres = preferences.favoriteGenres.slice(0, 2).join(" ");
+      const rating = preferences.preferredRating === "high" ? "best" : "";
+      const decade = preferences.favoriteDecades?.[0] || "";
+      
+      // Create natural language query
+      let query = `${rating} ${genres} movies`;
+      
+      // Add decade/year if available
+      if (decade === "2020s") {
+        query += " 2020";
+      } else if (decade === "2010s") {
+        query += " 2015";
+      }
+
+      // Create welcome message
+      let welcomeMsg = `🎬 Based on your preferences, here are`;
+      if (rating) welcomeMsg += ` ${rating}`;
+      welcomeMsg += ` ${genres} movies`;
+      if (decade) welcomeMsg += ` from the ${decade}`;
+      welcomeMsg += ` just for you! ✨`;
+      
+      setWelcomeMessage(welcomeMsg);
+      setTimeout(() => setWelcomeMessage(""), 5000); // Hide after 5 seconds
+
+      // Parse and search with preferences
+      const parsed = parseNaturalLanguageQuery(query);
+      const results = await smartSearch(parsed);
+      
+      setMovies(results);
+    } catch (err) {
+      console.error("Failed to load personalized movies:", err);
+      findMovie("popular movies");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /* ---------------- INITIAL LOAD ---------------- */
   useEffect(() => {
     // Only load movies if preferences are completed
     if (localStorage.getItem("preferencesCompleted")) {
-      findMovie("popular movies");
+      const savedPrefs = JSON.parse(localStorage.getItem("moviePreferences") || "null");
+      if (savedPrefs) {
+        loadPersonalizedMovies(savedPrefs);
+      } else {
+        findMovie("popular movies");
+      }
     }
   }, []);
 
@@ -183,6 +238,12 @@ export default function App() {
           ⚙️ Preferences
         </button>
       </div>
+
+      {welcomeMessage && (
+        <div className="welcome-message">
+          {welcomeMessage}
+        </div>
+      )}
 
       {userPreferences && (
         <div className="active-preferences">
@@ -262,14 +323,13 @@ export default function App() {
           currentPreferences={userPreferences}
           isFirstTime={!localStorage.getItem("preferencesCompleted")}
           onSave={(prefs) => {
+            const isFirstTime = !localStorage.getItem("preferencesCompleted");
             localStorage.setItem("moviePreferences", JSON.stringify(prefs));
             localStorage.setItem("preferencesCompleted", "true");
             setUserPreferences(prefs);
             setShowPreferences(false);
-            // Load initial movies after preferences are set
-            if (!localStorage.getItem("preferencesCompleted")) {
-              findMovie("popular movies");
-            }
+            // Load personalized movies based on preferences
+            loadPersonalizedMovies(prefs);
           }}
           onClose={() => {
             // Don't allow closing if it's the first time
