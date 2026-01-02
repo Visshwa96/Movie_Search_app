@@ -513,8 +513,8 @@ h1 {
 /* Favorite Button */
 .favorite-btn {
   position: absolute;
-  bottom: 140px;
-  right: 15px;
+  top: 10px;
+  right: 10px;
   background: linear-gradient(135deg, rgba(255, 0, 110, 0.3), rgba(245, 87, 108, 0.3));
   border: 2px solid rgba(255, 0, 110, 0.5);
   border-radius: 50%;
@@ -541,11 +541,19 @@ h1 {
   box-shadow: 0 6px 30px rgba(255, 0, 110, 0.8);
 }
 
+/* Always show on touch devices (mobile) */
+@media (hover: none) and (pointer: coarse) {
+  .favorite-btn,
+  .details-btn {
+    opacity: 1;
+  }
+}
+
 /* Details Button */
 .details-btn {
   position: absolute;
-  bottom: 200px;
-  right: 15px;
+  top: 10px;
+  left: 10px;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(168, 85, 247, 0.3));
   border: 2px solid rgba(168, 85, 247, 0.5);
   border-radius: 50%;
@@ -1494,6 +1502,25 @@ h1 {
   .soundtrack-header h2 {
     font-size: 1.8rem;
   }
+
+  /* Mobile adjustments for buttons */
+  .favorite-btn,
+  .details-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 1.3rem;
+    opacity: 1;
+  }
+
+  .favorite-btn {
+    top: 8px;
+    right: 8px;
+  }
+
+  .details-btn {
+    top: 8px;
+    left: 8px;
+  }
 }
 
 @media screen and (max-width: 400px) {
@@ -1566,6 +1593,25 @@ h1 {
 
   .music-btn {
     left: 10px;
+  }
+
+  /* Ensure buttons are always visible on smallest screens */
+  .favorite-btn,
+  .details-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    opacity: 1;
+  }
+
+  .favorite-btn {
+    top: 6px;
+    right: 6px;
+  }
+
+  .details-btn {
+    top: 6px;
+    left: 6px;
   }
 
   .modal-content,
