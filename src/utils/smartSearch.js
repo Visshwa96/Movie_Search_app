@@ -18,8 +18,10 @@ export async function smartSearch(parsedQuery = {}) {
     detectedTypes = [],
     ratingFilter = null,
     ratingRange = null,
+    year = null,
     originalQuery = "",
-    excludeKeywords = []
+    excludeKeywords = [],
+    titleSeeds = []
   } = parsedQuery;
 
   const movieMap = new Map();
@@ -27,10 +29,21 @@ export async function smartSearch(parsedQuery = {}) {
   /* ---------------- SEARCH TERMS ---------------- */
   const searchTerms = [];
 
-  // Strongest signals first
-  keywords.slice(0, 3).forEach(k => searchTerms.push(k));
-  detectedGenres.forEach(g => searchTerms.push(g));
-  detectedPlatforms.forEach(p => searchTerms.push(p));
+  // For language-specific searches, use broader terms
+  if (detectedLanguages.length > 0) {
+    // Use genre or popular keywords for language searches
+    if (detectedGenres.length > 0) {
+      detectedGenres.forEach(g => searchTerms.push(g));
+    } else {
+      // Use common keywords for popular movies
+      searchTerms.push("popular", "best", "award");
+    }
+  } else {
+    // Strongest signals first
+    titleSeeds.slice(0, 3).forEach(k => searchTerms.push(k));
+    detectedGenres.forEach(g => searchTerms.push(g));
+    detectedPlatforms.forEach(p => searchTerms.push(p));
+  }
 
   if (!searchTerms.length) {
     searchTerms.push(originalQuery || "movie");
@@ -38,11 +51,15 @@ export async function smartSearch(parsedQuery = {}) {
 
   /* ---------------- FETCH SEARCH RESULTS ---------------- */
   const responses = await Promise.all(
-    searchTerms.map(term =>
-      fetch(`${API_URL}&s=${encodeURIComponent(term)}`)
+    searchTerms.map(term => {
+      let url = `${API_URL}&s=${encodeURIComponent(term)}`;
+      if (year) {
+        url += `&y=${year}`;
+      }
+      return fetch(url)
         .then(r => r.json())
-        .catch(() => null)
-    )
+        .catch(() => null);
+    })
   );
 
   responses.forEach(res => {
@@ -56,8 +73,8 @@ export async function smartSearch(parsedQuery = {}) {
         /* ---------------- RELEVANCE SCORING ---------------- */
 
         // Keyword match (strong)
-        keywords.forEach(k => {
-          if (title.includes(k)) relevanceScore += 4;
+        titleSeeds.forEach(k => {
+          if (title.includes(k.toLowerCase())) relevanceScore += 4;
         });
 
         // Genre match
@@ -128,13 +145,37 @@ export async function smartSearch(parsedQuery = {}) {
 
   /* ---------------- LANGUAGE FILTER ---------------- */
   if (detectedLanguages.length) {
-    movies = movies.filter(m =>
-      detectedLanguages.some(lang =>
-        m.Language.toLowerCase().includes(lang) ||
-        (lang === "tamil" && m.Country.toLowerCase().includes("india")) ||
-        (lang === "korean" && m.Country.toLowerCase().includes("korea"))
-      )
-    );
+    const languageCountryMap = {
+      tamil: ["tamil", "india"],
+      hindi: ["hindi", "india"],
+      telugu: ["telugu", "india"],
+      malayalam: ["malayalam", "india"],
+      kannada: ["kannada", "india"],
+      korean: ["korean", "korea"],
+      japanese: ["japanese", "japan"],
+      chinese: ["chinese", "china", "hong kong", "taiwan"],
+      spanish: ["spanish", "spain", "mexico", "argentina"],
+      french: ["french", "france"],
+      german: ["german", "germany"],
+      italian: ["italian", "italy"]
+    };
+
+    movies = movies.filter(m => {
+      const language = (m.Language || "").toLowerCase();
+      const country = (m.Country || "").toLowerCase();
+      
+      return detectedLanguages.some(lang => {
+        const searchTerms = languageCountryMap[lang] || [lang];
+        return searchTerms.some(term => 
+          language.includes(term) || country.includes(term)
+        );
+      });
+    });
+  }
+
+  /* ---------------- YEAR FILTER ---------------- */
+  if (year) {
+    movies = movies.filter(m => m.Year && m.Year.includes(year));
   }
 
   /* ---------------- RATING FILTER ---------------- */

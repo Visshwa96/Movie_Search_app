@@ -8,6 +8,7 @@ const UserPreferences = ({ onSave, onClose, currentPreferences, isFirstTime = tr
         favoriteDecades: [],
         preferredRating: 'all',
         favoriteActors: '',
+        favoriteDirectors: '',
         avoidGenres: []
     });
 
@@ -180,6 +181,19 @@ const UserPreferences = ({ onSave, onClose, currentPreferences, isFirstTime = tr
                             }))}
                         />
                         
+                        <h3 style={{ marginTop: '30px' }}>Favorite directors 🎥</h3>
+                        <p className="section-hint">Optional - Comma-separated names</p>
+                        <input
+                            type="text"
+                            className="actors-input"
+                            placeholder="e.g., Steven Spielberg, Quentin Tarantino, Greta Gerwig"
+                            value={preferences.favoriteDirectors}
+                            onChange={(e) => setPreferences(prev => ({
+                                ...prev,
+                                favoriteDirectors: e.target.value
+                            }))}
+                        />
+                        
                         <div className="summary-section">
                             <h3 style={{ marginTop: '40px' }}>Your Preferences Summary 📋</h3>
                             <div className="summary-content">
@@ -190,6 +204,12 @@ const UserPreferences = ({ onSave, onClose, currentPreferences, isFirstTime = tr
                                 <p><strong>Rating Preference:</strong> {ratings.find(r => r.value === preferences.preferredRating)?.label}</p>
                                 {preferences.avoidGenres.length > 0 && (
                                     <p><strong>Avoid:</strong> {preferences.avoidGenres.join(', ')}</p>
+                                )}
+                                {preferences.favoriteActors && (
+                                    <p><strong>Favorite Actors:</strong> {preferences.favoriteActors}</p>
+                                )}
+                                {preferences.favoriteDirectors && (
+                                    <p><strong>Favorite Directors:</strong> {preferences.favoriteDirectors}</p>
                                 )}
                             </div>
                         </div>

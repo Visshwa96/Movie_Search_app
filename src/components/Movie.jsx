@@ -1,10 +1,20 @@
 import React from 'react';
 
-const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick }) => {
+const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick, onFavoriteClick, onDetailsClick, isFavorite }) => {
     
     const handleMovieClick = (e) => {
+        // If click is on details button, show full details
+        if (e.target.closest('.details-btn')) {
+            e.stopPropagation();
+            onDetailsClick(movie);
+        }
+        // If click is on favorite button, toggle favorite
+        else if (e.target.closest('.favorite-btn')) {
+            e.stopPropagation();
+            onFavoriteClick(movie);
+        }
         // If click is on music button, show soundtrack
-        if (e.target.closest('.music-btn')) {
+        else if (e.target.closest('.music-btn')) {
             e.stopPropagation();
             onSoundtrackClick(movie);
         }
@@ -40,6 +50,12 @@ const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick }) 
         )}
     </div>
     <div className="play-icon">▶</div>
+    <button className="details-btn" title="View full details">
+        ℹ️
+    </button>
+    <button className="favorite-btn" title={isFavorite ? "Remove from favorites" : "Add to favorites"}>
+        {isFavorite ? '❤️' : '🤍'}
+    </button>
     <button className="watch-btn" title="Where to watch">
         📺
     </button>
