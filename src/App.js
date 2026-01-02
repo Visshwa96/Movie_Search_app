@@ -24,6 +24,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [clipboardMessage, setClipboardMessage] = useState("");
 
   const [trailerVideoId, setTrailerVideoId] = useState(null);
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -139,6 +140,29 @@ export default function App() {
     }
   };
 
+  /* ---------------- BOOK TICKETS ---------------- */
+  const handleBookTickets = (movie) => {
+    const city = userPreferences?.city || 'mumbai';
+    // Open BookMyShow movies page for the city
+    const bookMyShowUrl = `https://in.bookmyshow.com/explore/movies-${city}`;
+    
+    // Copy movie title to clipboard for easy search
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(movie.Title).then(() => {
+        setClipboardMessage(`"${movie.Title}" copied to clipboard! 📋\nPaste it in BookMyShow search bar.`);
+        setTimeout(() => setClipboardMessage(""), 4000);
+      }).catch(() => {
+        setClipboardMessage(`Search for "${movie.Title}" on BookMyShow`);
+        setTimeout(() => setClipboardMessage(""), 4000);
+      });
+    } else {
+      setClipboardMessage(`Search for "${movie.Title}" on BookMyShow`);
+      setTimeout(() => setClipboardMessage(""), 4000);
+    }
+    
+    window.open(bookMyShowUrl, '_blank');
+  };
+
   /* ---------------- MOVIE DETAILS ---------------- */
   const fetchMovieDetails = async (movie) => {
     try {
@@ -245,6 +269,12 @@ export default function App() {
         </div>
       )}
 
+      {clipboardMessage && (
+        <div className="clipboard-message">
+          {clipboardMessage}
+        </div>
+      )}
+
       {userPreferences && (
         <div className="active-preferences">
           <span className="pref-label">Active Preferences:</span>
@@ -292,6 +322,7 @@ export default function App() {
               onSoundtrackClick={() => setSoundtrackMovie(m)}
               onFavoriteClick={() => toggleFavorite(m)}
               onDetailsClick={() => fetchMovieDetails(m)}
+              onBookTickets={() => handleBookTickets(m)}
               isFavorite={isFavorite(m.imdbID)}
             />
           ))}

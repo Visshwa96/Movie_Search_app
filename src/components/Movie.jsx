@@ -1,10 +1,15 @@
 import React from 'react';
 
-const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick, onFavoriteClick, onDetailsClick, isFavorite }) => {
+const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick, onFavoriteClick, onDetailsClick, onBookTickets, isFavorite }) => {
     
     const handleMovieClick = (e) => {
+        // If click is on book tickets button
+        if (e.target.closest('.book-tickets-btn')) {
+            e.stopPropagation();
+            onBookTickets(movie);
+        }
         // If click is on details button, show full details
-        if (e.target.closest('.details-btn')) {
+        else if (e.target.closest('.details-btn')) {
             e.stopPropagation();
             onDetailsClick(movie);
         }
@@ -61,6 +66,9 @@ const Movie = ({ movie, onMovieClick, onWatchOptionsClick, onSoundtrackClick, on
     </button>
     <button className="music-btn" title="Listen to soundtrack">
         🎵
+    </button>
+    <button className="book-tickets-btn" title="Book tickets">
+        🎟️
     </button>
 </div>
     );

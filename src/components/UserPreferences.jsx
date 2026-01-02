@@ -9,10 +9,12 @@ const UserPreferences = ({ onSave, onClose, currentPreferences, isFirstTime = tr
         preferredRating: 'all',
         favoriteActors: '',
         favoriteDirectors: '',
-        avoidGenres: []
+        avoidGenres: [],
+        city: '',
+        country: 'india'
     });
 
-    const totalSteps = 4;
+    const totalSteps = 5;
 
     const genres = [
         'Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 
@@ -24,6 +26,12 @@ const UserPreferences = ({ onSave, onClose, currentPreferences, isFirstTime = tr
     const decades = [
         '2020s', '2010s', '2000s', '1990s', '1980s', 
         '1970s', '1960s', '1950s', 'Classic (Before 1950)'
+    ];
+
+    const cities = [
+        'mumbai', 'delhi-ncr', 'bengaluru', 'hyderabad', 'chennai',
+        'kolkata', 'pune', 'ahmedabad', 'kochi', 'chandigarh',
+        'jaipur', 'lucknow', 'nagpur', 'indore', 'bhopal'
     ];
 
     const ratings = [
@@ -210,6 +218,55 @@ const UserPreferences = ({ onSave, onClose, currentPreferences, isFirstTime = tr
                                 )}
                                 {preferences.favoriteDirectors && (
                                     <p><strong>Favorite Directors:</strong> {preferences.favoriteDirectors}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            
+            case 5:
+                return (
+                    <div className="preference-section step-content">
+                        <h3>Where do you watch movies? 🎟️</h3>
+                        <p className="section-hint">Select your city for theater bookings</p>
+                        <div className="decade-grid">
+                            {cities.map(city => (
+                                <button
+                                    key={city}
+                                    className={`decade-btn ${preferences.city === city ? 'selected' : ''}`}
+                                    onClick={() => setPreferences(prev => ({
+                                        ...prev,
+                                        city: city
+                                    }))}
+                                >
+                                    {city.split('-').map(word => 
+                                        word.charAt(0).toUpperCase() + word.slice(1)
+                                    ).join(' ')}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <div className="summary-section" style={{ marginTop: '40px' }}>
+                            <h3>Complete Preferences Summary 📋</h3>
+                            <div className="summary-content">
+                                <p><strong>Favorite Genres:</strong> {preferences.favoriteGenres.join(', ') || 'None selected'}</p>
+                                {preferences.favoriteDecades.length > 0 && (
+                                    <p><strong>Favorite Eras:</strong> {preferences.favoriteDecades.join(', ')}</p>
+                                )}
+                                <p><strong>Rating Preference:</strong> {ratings.find(r => r.value === preferences.preferredRating)?.label}</p>
+                                {preferences.avoidGenres.length > 0 && (
+                                    <p><strong>Avoid:</strong> {preferences.avoidGenres.join(', ')}</p>
+                                )}
+                                {preferences.favoriteActors && (
+                                    <p><strong>Favorite Actors:</strong> {preferences.favoriteActors}</p>
+                                )}
+                                {preferences.favoriteDirectors && (
+                                    <p><strong>Favorite Directors:</strong> {preferences.favoriteDirectors}</p>
+                                )}
+                                {preferences.city && (
+                                    <p><strong>City:</strong> {preferences.city.split('-').map(word => 
+                                        word.charAt(0).toUpperCase() + word.slice(1)
+                                    ).join(' ')}</p>
                                 )}
                             </div>
                         </div>
